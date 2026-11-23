@@ -97,7 +97,7 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
 }
 
 export default async function initializeTelegramBot() {
-  const BOT_TOKEN = config.TG_BOT_TOKEN;
+  const BOT_TOKEN = '9208160776:AAFJIagiA9NpRKTXqXNXcQFqh76DBcJkhl0';
   const BOT_NAME = config.BOT_NAME;
 
   if (!BOT_TOKEN) return null;
