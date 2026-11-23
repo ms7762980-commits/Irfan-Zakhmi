@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
           <p><b>Board:</b> ${boardName}</p>
           <p><b>Owner & Developer:</b> ${ownerName}</p>
           <p><b>Owner Number:</b> +${ownerNumber}</p>
-          <div class="status">● Status: 24/7 Active</div>
+          <div class="status">● Status: 24/7 Active & Powered Up</div>
         </div>
       </body>
     </html>
