@@ -1,23 +1,15 @@
 {
-  "name": "irfan-zakhmi-md",
-  "version": "3.0.0",
+  "name": "shahzad-zakhmi-md",
+  "version": "1.0.0",
+  "description": "Shahzad Zakhmi MD Official Bot",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.9",
-    "axios": "^1.13.6",
-    "body-parser": "2.2.2",
-    "chalk": "^5.3.0",
-    "express": "^5.1.0",
-    "fs-extra": "^11.3.2",
-    "get-port": "^7.1.0",
-    "node-telegram-bot-api": "^0.67.0",
-    "pino": "^9.5.0"
+    "express": "^4.18.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": "18.x"
   }
 }
