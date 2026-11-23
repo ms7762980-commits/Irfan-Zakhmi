@@ -36,7 +36,7 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
       },
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
-      browser: Browsers.macOS("Chrome"), // Changed to macOS/Chrome for better WA compatibility
+      browser: Browsers.macOS("Chrome"),
     });
 
     if (!sock.authState.creds.registered) {
@@ -93,7 +93,6 @@ export default async function initializeTelegramBot() {
 
   const { default: TelegramBot } = await import("node-telegram-bot-api");
   
-  // Single polling instance with strict conflict avoidance
   const tbot = new TelegramBot(BOT_TOKEN, { 
     polling: {
       interval: 3000,
@@ -110,7 +109,6 @@ export default async function initializeTelegramBot() {
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
-  // Clean single listener with lock flag to prevent double processing
   let isProcessing = false;
 
   tbot.on("message", async (msg) => {
