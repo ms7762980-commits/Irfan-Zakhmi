@@ -12,7 +12,7 @@ global.OWNER_NAME = "Irfan Zakhmi"
 global.DEVELOPER_NAME = "Shahzad"
 global.BOT_PIC_URL = "https://files.catbox.moe/92e8l2.jpg"
 
-global.TG_BOT_TOKEN = "8753235518:AAE7_FcpKKb6Wj3LjDcoyEVK5NQIKwWAZkk"
+global.TG_BOT_TOKEN = "8922811039:AAGWJDk7fwY1QZIOo74oHGaYRvMGslTxbFo"
 global.WA_CHANNEL_LINK = "https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z"
 
 export default {
