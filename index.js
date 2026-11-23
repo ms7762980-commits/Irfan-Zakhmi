@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import getPort from "get-port";
-import initializeTelegramBot from "./boat.js";
+import initializeTelegramBot from "./bot.js";
 import "./config.js";
 
 const app = express();
