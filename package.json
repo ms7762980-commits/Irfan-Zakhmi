@@ -1,6 +1,18 @@
+{
+  "name": "shahzad-zakhmi-md",
+  "version": "1.0.0",
+  "description": "Shahzad Zakhmi MD Official Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "node-telegram-bot-api": "^0.61.0",
     "@whiskeysockets/baileys": "^6.7.0",
     "pino": "^8.19.0"
+  },
+  "engines": {
+    "node": "18.x"
   }
+}
