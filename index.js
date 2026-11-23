@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import getPort from "get-port";
-import initializeTelegramBot from "./bot.js";
+import initializeTelegramBot from "./boat.js";
 import "./config.js";
 
 const app = express();
@@ -14,7 +14,7 @@ app.get("/", (_req, res) => {
   });
 });
 
-const PORT = process.env.PORT || (await getPort({ port: 3000 }));
+const PORT = process.env.PORT || (await getPort({ port: 8080 }));
 
 (async function init() {
   try {
