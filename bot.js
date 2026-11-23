@@ -97,13 +97,28 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
 }
 
 export default async function initializeTelegramBot() {
-  const BOT_TOKEN = '9208160776:AAFJIagiA9NpRKTXqXNXcQFqh76DBcJkhl0';
+  const BOT_TOKEN = config.TG_BOT_TOKEN;
   const BOT_NAME = config.BOT_NAME;
 
   if (!BOT_TOKEN) return null;
 
   const { default: TelegramBot } = await import("node-telegram-bot-api");
-  const tbot = new TelegramBot(BOT_TOKEN, { polling: true });
+  // polling error handling added to prevent 409 conflict crashes
+  const tbot = new TelegramBot(BOT_TOKEN, { 
+    polling: {
+      interval: 2000,
+      autoStart: true,
+      params: { timeout: 10 }
+    } 
+  });
+
+  tbot.on("polling_error", (error) => {
+    // Suppress minor conflict logs to keep console clean
+    if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
+      return;
+    }
+    console.error(`[Telegram Polling Error]:`, error.message);
+  });
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
