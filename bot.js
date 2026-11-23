@@ -19,19 +19,19 @@ function startBot() {
   const bot = new TelegramBot(telegramToken, { polling: true });
   console.log(`${botName} is successfully connected and listening to Telegram!`);
 
-  // /start کمانڈ اور زبردست انٹرفیس بٹنز
+  // /start کمانڈ اور سیمپل کمانڈ بٹن
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const userName = msg.from.first_name || "User";
     
-    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +\`${ownerNumber}\`\n\nTo get your WhatsApp pairing code, click the button below or type:\n\`/pair ${ownerNumber}\``;
+    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +\`${ownerNumber}\`\n\nClick the button below to get the pairing command sample or type:\n\`/pair ${ownerNumber}\``;
     
     const opts = {
       parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "⚡ Get Pairing Code", callback_data: "trigger_pair" },
+            { text: "⚡ /pair Sample Command", switch_inline_query_current_chat: `/pair ${ownerNumber}` },
             { text: "🤖 Bot Status", callback_data: "status" }
           ],
           [
@@ -55,10 +55,6 @@ function startBot() {
       bot.sendMessage(chatId, `✅ *${botName}* is 24/7 Active on Railway Server!`, { parse_mode: "Markdown" });
     } else if (data === 'owner') {
       bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +\`${ownerNumber}\`\nChannel: ${CHANNEL_LINK}`, { parse_mode: "Markdown" });
-    } else if (data === 'trigger_pair') {
-      // جب یوزر بٹن دبائے گا تو خود بخود اس کا پیئرنگ کوڈ جنریٹ ہونا شروع ہو جائے گا
-      bot.sendMessage(chatId, `⚡ *[${botName}]*\nInitiating automatic pairing process for owner number: \`+${ownerNumber}\`...\nPlease wait.`, { parse_mode: "Markdown" });
-      generatePairingCode(bot, chatId, ownerNumber);
     }
     bot.answerCallbackQuery(callbackQuery.id);
   });
@@ -78,7 +74,7 @@ function startBot() {
   });
 }
 
-// واٹس ایپ پیئرنگ کوڈ جنریٹ کرنے کا فول پروف فنکشن
+// واٹس ایپ پیئرنگ کوڈ جنریٹ کرنے کا فول پروف اور ایرر فری فنکشن
 async function generatePairingCode(bot, chatId, phoneNumber) {
   try {
     const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}_${Date.now()}`);
@@ -90,22 +86,30 @@ async function generatePairingCode(bot, chatId, phoneNumber) {
       logger: pino({ level: 'silent' })
     });
 
-    if (!sock.authState.creds.registered) {
-      await delay(3000); // سرور کے لیے سٹیبل ہولڈ ٹائم
-      let pairingCode = await sock.requestPairingCode(phoneNumber);
-      pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
-      
-      const responseText = `✨ *${botName} Official Pairing System* ✨\n\n📱 *Number:* \`+${phoneNumber}\`\n🔑 *Pairing Code:* \`\`\`${pairingCode}\`\`\`\n\n📢 *Channel:* [Join WhatsApp Channel](${CHANNEL_LINK})\n\n📌 *Instructions:* Open WhatsApp on your phone -> Linked Devices -> Link with phone number instead -> Enter this code.`;
-      
-      bot.sendMessage(chatId, responseText, { parse_mode: "Markdown", disable_web_page_preview: true });
-    } else {
-      bot.sendMessage(chatId, `⚠️ This number is already registered or connected!`);
-    }
-
     sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on('connection.update', (update) => {
+    let codeRequested = false;
+
+    sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
+      
+      // جب کنکشن اسٹیبلش ہو جائے تو پیئرنگ کوڈ ریکویسٹ کریں تاکہ کوئی ٹائم آؤٹ ایرر نہ آئے
+      if (!codeRequested && !sock.authState.creds.registered) {
+        codeRequested = true;
+        try {
+          await delay(2500);
+          let pairingCode = await sock.requestPairingCode(phoneNumber);
+          pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
+          
+          const responseText = `✨ *${botName} Official Pairing System* ✨\n\n📱 *Number:* \`+${phoneNumber}\`\n🔑 *Pairing Code:* \`\`\`${pairingCode}\`\`\`\n\n📢 *Channel:* [Join WhatsApp Channel](${CHANNEL_LINK})\n\n📌 *Instructions:* Open WhatsApp on your phone -> Linked Devices -> Link with phone number instead -> Enter this code.`;
+          
+          bot.sendMessage(chatId, responseText, { parse_mode: "Markdown", disable_web_page_preview: true });
+        } catch (err) {
+          console.error("Pairing Request Error:", err);
+          bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please verify the number and try again.`);
+        }
+      }
+
       if (connection === 'close') {
         const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
         if (shouldReconnect) {
@@ -115,8 +119,8 @@ async function generatePairingCode(bot, chatId, phoneNumber) {
     });
 
   } catch (error) {
-    console.error("Pairing Error Fixed:", error);
-    bot.sendMessage(chatId, `❌ Connection error. Please make sure the number is correct and try again with \`/pair ${phoneNumber}\` or click the button.`);
+    console.error("Socket Error Handled:", error);
+    bot.sendMessage(chatId, `❌ Connection error. Please try again with \`/pair ${phoneNumber}\`.`);
   }
 }
 
