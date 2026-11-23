@@ -1,23 +1,27 @@
-import express from "express";
-import config from "./config.js";
-import initializeTelegramBot from "./bot.js";
+// base by شہزاد زخمی
+const { spawn } = require('child_process');
+const path = require('path');
 
-const app = express();
-const PORT = process.env.PORT || 8080;
+function start() {
+    let args = [path.join(__dirname, 'bot.js'), ...process.argv.slice(2)];
+    console.log([process.argv[0], ...args].join('\n'));
+    
+    let p = spawn(process.argv[0], args, {
+        stdio: ['inherit', 'inherit', 'inherit', 'ipc']
+    })
+    .on('message', data => {
+        if (data === 'reset') {
+            console.log('Restarting Bot...');
+            p.kill();
+            start();
+        }
+    })
+    .on('exit', code => {
+        console.error('Exited with code:', code);
+        if (code === '.' || code === 1 || code === 0) {
+            start();
+        }
+    });
+}
 
-app.get("/", (req, res) => {
-  res.send(`${config.BOT_NAME} is 24/7 Active on Railway!`);
-});
-
-app.listen(PORT, () => {
-  console.log(`${config.BOT_NAME} server is running on port ${PORT}`);
-});
-
-(async () => {
-  try {
-    console.log(`${config.BOT_NAME} is getting ready to connect with Telegram & WhatsApp...`);
-    await initializeTelegramBot();
-  } catch (error) {
-    console.error("Failed to start bot:", error);
-  }
-})();
+start();
