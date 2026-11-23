@@ -1,0 +1,24 @@
+{
+  "name": "irfan-zakhmi-md",
+  "version": "3.0.0",
+  "description": "Irfan Zakhmi MD - Multi-session WhatsApp & Telegram Bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "axios": "^1.13.6",
+    "body-parser": "2.2.2",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.2",
+    "get-port": "^7.1.0",
+    "node-telegram-bot-api": "^0.67.0",
+    "pino": "^10.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
