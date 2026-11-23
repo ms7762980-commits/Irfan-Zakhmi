@@ -1,5 +1,7 @@
 const { ownerName, ownerNumber, botName, boardName, developerName, telegramToken } = require('./config');
 const TelegramBot = require('node-telegram-bot-api');
+const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, DisconnectReason } = require('@whiskeysockets/baileys');
+const pino = require('pino');
 
 const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z";
 
@@ -15,14 +17,14 @@ function startBot() {
   }
 
   const bot = new TelegramBot(telegramToken, { polling: true });
-  console.log(`${botName} is successfully connected and listening to Telegram with Heavy Bug Menu!`);
+  console.log(`${botName} is successfully connected and listening to Telegram!`);
 
-  // /start کمانڈ اور زبردست انٹرفیس
+  // /start کمانڈ اور مینو
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const userName = msg.from.first_name || "User";
     
-    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active Heavy MD Bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +\`${ownerNumber}\`\n\nChoose an option below or use bug commands in Telegram:`;
+    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +\`${ownerNumber}\`\n\nTo get your WhatsApp pairing code, click the button below or type:\n\`/pair ${ownerNumber}\``;
     
     const opts = {
       parse_mode: "Markdown",
@@ -30,13 +32,10 @@ function startBot() {
         inline_keyboard: [
           [
             { text: "⚡ /pair Sample Command", switch_inline_query_current_chat: `/pair ${ownerNumber}` },
-            { text: "☣️ Bug Menu", callback_data: "bug_menu" }
+            { text: "🤖 Bot Status", callback_data: "status" }
           ],
           [
-            { text: "🤖 Bot Status", callback_data: "status" },
-            { text: "👑 Owner Info", callback_data: "owner" }
-          ],
-          [
+            { text: "👑 Owner Info", callback_data: "owner" },
             { text: "📢 Join WhatsApp Channel", url: CHANNEL_LINK }
           ]
         ]
@@ -46,42 +45,73 @@ function startBot() {
     bot.sendMessage(chatId, replyText, opts);
   });
 
-  // بٹن ہینڈلر (بگ مینو اور دیگر فیچرز)
+  // بٹن ہینڈلر
   bot.on('callback_query', async (callbackQuery) => {
     const message = callbackQuery.message;
     const data = callbackQuery.data;
     const chatId = message.chat.id;
 
     if (data === 'status') {
-      bot.sendMessage(chatId, `✅ *${botName}* is 24/7 Active on Heavy Server!\n⚡ Speed: Ultra Fast`, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `✅ *${botName}* is 24/7 Active on Railway Server!`, { parse_mode: "Markdown" });
     } else if (data === 'owner') {
       bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +\`${ownerNumber}\`\nChannel: ${CHANNEL_LINK}`, { parse_mode: "Markdown" });
-    } else if (data === 'bug_menu') {
-      const bugMenuText = `☣️ *[ ${botName} - TELEGRAM BUG MENU ]* ☣️\n\nAvailable Bug & Crash Commands:\n\n• \`.bug\`: Send heavy crash payload\n• \`.delay\`: Lag target chat\n• \`.uiOS\`: iOS UI crash sender\n• \`.xbug\`: Extreme multi-thread bug\n• \`.crash\`: Force close target app\n\n_Use these commands directly in chat!_`;
-      bot.sendMessage(chatId, bugMenuText, { parse_mode: "Markdown" });
     }
     bot.answerCallbackQuery(callbackQuery.id);
   });
 
-  // ٹیلی گرام بگ کمانڈز اور پیئرنگ ہینڈلر
-  bot.on('message', (msg) => {
+  // /pair کمانڈ ہینڈلر (واٹس ایپ ویریفیکیشن کوڈ کے لیے)
+  bot.onText(/\/pair (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const text = msg.text;
+    let phoneNumber = match[1].trim().replace(/[^0-9]/g, '');
+    
+    if (phoneNumber.length < 10) {
+      bot.sendMessage(chatId, `❌ Please provide a valid phone number with country code.\nExample: \`/pair ${ownerNumber}\``, { parse_mode: "Markdown" });
+      return;
+    }
 
-    if (!text) return;
+    bot.sendMessage(chatId, `⏳ *[${botName}]*\nConnecting to WhatsApp servers for \`+${phoneNumber}\`...\nPlease wait.`, { parse_mode: "Markdown" });
+    
+    try {
+      const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}_${Date.now()}`);
+      
+      const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        browser: Browsers.macOS("Chrome"),
+        logger: pino({ level: 'silent' })
+      });
 
-    if (text.startsWith('/pair') || text.startsWith('.pair')) {
-      bot.sendMessage(chatId, `⚙️ *[${botName}]*\nHeavy MD Port active. To link WhatsApp or get code, ensure your number format is correct. Owner: +\`${ownerNumber}\``, { parse_mode: "Markdown" });
-    } else if (text.startsWith('.bug') || text.startsWith('/bug')) {
-      bot.sendMessage(chatId, `☣️ *Executing Heavy Bug Payload...*\nTarget processed successfully by ${botName}!`, { parse_mode: "Markdown" });
-    } else if (text.startsWith('.delay') || text.startsWith('/delay')) {
-      bot.sendMessage(chatId, `⏳ *Delay Lag Executed Successfully!*`, { parse_mode: "Markdown" });
-    } else if (text.startsWith('.uiOS') || text.startsWith('/uiOS')) {
-      bot.sendMessage(chatId, `🍏 *iOS Crash UI Packet Sent!*`, { parse_mode: "Markdown" });
-    } else if (text.startsWith('.xbug') || text.startsWith('/xbug')) {
-      bot.sendMessage(chatId, `🔥 *Extreme X-Bug Flooded!*`, { parse_mode: "Markdown" });
-    } else if (text.startsWith('.crash') || text.startsWith('/crash')) {
-      bot.sendMessage(chatId, `💥 *Target Force Crash Triggered!*`, { parse_mode: "Markdown" });
+      sock.ev.on('creds.update', saveCreds);
+
+      setTimeout(async () => {
+        try {
+          if (!sock.authState.creds.registered) {
+            let pairingCode = await sock.requestPairingCode(phoneNumber);
+            pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
+            
+            const responseText = `✨ *${botName} Pairing System* ✨\n\n📱 *Number:* \`+${phoneNumber}\`\n🔑 *Pairing Code:* \`\`\`${pairingCode}\`\`\`\n\n📢 *Channel:* [Join WhatsApp Channel](${CHANNEL_LINK})\n\n📌 *Instructions:* Open WhatsApp on your phone -> Linked Devices -> Link with phone number instead -> Enter this code.`;
+            
+            bot.sendMessage(chatId, responseText, { parse_mode: "Markdown", disable_web_page_preview: true });
+          }
+        } catch (err) {
+          console.error("Pairing Request Error:", err);
+          bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please verify the number format and try again.`);
+        }
+      }, 4000);
+
+      sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'close') {
+          const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+          if (shouldReconnect) {
+            console.log("Connection closed safely.");
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error("Socket Error Handled:", error);
+      bot.sendMessage(chatId, `❌ Connection error. Please try again with \`/pair ${phoneNumber}\`.`);
     }
   });
 }
