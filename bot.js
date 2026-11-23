@@ -12,7 +12,7 @@ let isPairingRunning = false;
 
 async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
   if (isPairingRunning) {
-    await tbot.sendMessage(chatId, `⚠️ Another pairing process is already running. Please wait a few seconds.`, { parse_mode: "Markdown" });
+    await tbot.sendMessage(chatId, `⚠️ Pairing is already in progress. Please wait a moment.`, { parse_mode: "Markdown" });
     return;
   }
 
@@ -38,7 +38,7 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
     });
 
     if (!sock.authState.creds.registered) {
-      await delay(3000);
+      await delay(4000);
       const code = await sock.requestPairingCode(phoneNumber);
       const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
       
@@ -76,10 +76,9 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
     });
 
   } catch (err) {
-    isPairingRunning = false;
     await tbot.sendMessage(chatId, `❌ Pairing Error: ${err.message}`);
   } finally {
-    setTimeout(() => { isPairingRunning = false; }, 10000);
+    setTimeout(() => { isPairingRunning = false; }, 15000);
   }
 }
 
@@ -93,7 +92,7 @@ export default async function initializeTelegramBot() {
   
   const tbot = new TelegramBot(BOT_TOKEN, { 
     polling: {
-      interval: 2000,
+      interval: 3000,
       autoStart: true,
       params: { timeout: 10 }
     } 
@@ -107,13 +106,15 @@ export default async function initializeTelegramBot() {
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
-  let lastProcessedMsgId = null;
+  let lastMsgTime = 0;
 
   tbot.on("message", async (msg) => {
     if (!msg.text) return;
     
-    if (lastProcessedMsgId === msg.message_id) return;
-    lastProcessedMsgId = msg.message_id;
+    // Anti-Spam / Anti-Double trigger lock (blocks rapid duplicate triggers)
+    const now = Date.now();
+    if (now - lastMsgTime < 2000) return;
+    lastMsgTime = now;
 
     const chatId = msg.chat.id;
     const text = msg.text.trim();
@@ -123,13 +124,13 @@ export default async function initializeTelegramBot() {
         `✨ *${BOT_NAME}* is active and running 24/7!\n\n` +
         `👤 *Owner:* ${config.OWNER_NAME}\n` +
         `🛠️ *Developer:* ${config.DEVELOPER_NAME}\n\n` +
-        `👇 *Choose an option:*`;
+        `👇 *Choose an option below:*`;
 
       await tbot.sendMessage(chatId, welcomeMsg, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🔗 Pair WhatsApp Number", callback_data: "help_pair" }],
+            [{ text: "🔗 How to Pair WhatsApp", callback_data: "help_pair" }],
             [{ text: "📋 View Menu", callback_data: "menu" }],
             [{ text: "👑 Owner Info", callback_data: "owner" }],
             [{ text: "📢 Join Channel", url: config.WA_CHANNEL_LINK }]
@@ -165,7 +166,7 @@ export default async function initializeTelegramBot() {
     } else if (data === "owner") {
       await sendOwner(chatId, tbot);
     } else if (data === "help_pair") {
-      await tbot.sendMessage(chatId, `📱 Send your number like this:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
+      await tbot.sendMessage(chatId, `📱 To pair your WhatsApp, simply send your number with command like this:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
     }
     try {
       await tbot.answerCallbackQuery(callbackQuery.id);
@@ -195,7 +196,7 @@ async function sendMenu(chatId, tbot) {
     parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
-        [{ text: "🔗 Pair WhatsApp Number", callback_data: "help_pair" }],
+        [{ text: "🔗 Help Pair", callback_data: "help_pair" }],
         [{ text: "👑 Owner Info", callback_data: "owner" }],
         [{ text: "📢 Official Channel", url: config.WA_CHANNEL_LINK }]
       ]
