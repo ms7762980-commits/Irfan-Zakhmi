@@ -1,6 +1,6 @@
 const { ownerName, ownerNumber, botName, boardName, developerName, telegramToken } = require('./config');
 const TelegramBot = require('node-telegram-bot-api');
-const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 
 const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z";
@@ -59,7 +59,7 @@ function startBot() {
     bot.answerCallbackQuery(callbackQuery.id);
   });
 
-  // /pair کمانڈ ہینڈلر (واٹس ایپ ویریفیکیشن کوڈ کے لیے)
+  // /pair کمانڈ ہینڈلر (مضبوط سیشن اور کنکشن کے ساتھ)
   bot.onText(/\/pair (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     let phoneNumber = match[1].trim().replace(/[^0-9]/g, '');
@@ -69,7 +69,7 @@ function startBot() {
       return;
     }
 
-    bot.sendMessage(chatId, `⏳ *[${botName}]*\nConnecting to WhatsApp servers for \`+${phoneNumber}\`...\nPlease wait.`, { parse_mode: "Markdown" });
+    bot.sendMessage(chatId, `⏳ *[${botName}]*\nEstablishing secure session for \`+${phoneNumber}\`...\nPlease wait.`, { parse_mode: "Markdown" });
     
     try {
       const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}_${Date.now()}`);
@@ -83,28 +83,33 @@ function startBot() {
 
       sock.ev.on('creds.update', saveCreds);
 
-      setTimeout(async () => {
-        try {
-          if (!sock.authState.creds.registered) {
+      let codeRequested = false;
+
+      sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect } = update;
+        
+        if (!codeRequested && !sock.authState.creds.registered) {
+          codeRequested = true;
+          try {
+            // سرور کے ساتھ ہینڈشیک مکمل ہونے کے لیے تھوڑا سا ہولڈ ٹائم
+            await new Promise(resolve => setTimeout(resolve, 3500));
+            
             let pairingCode = await sock.requestPairingCode(phoneNumber);
             pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
             
             const responseText = `✨ *${botName} Pairing System* ✨\n\n📱 *Number:* \`+${phoneNumber}\`\n🔑 *Pairing Code:* \`\`\`${pairingCode}\`\`\`\n\n📢 *Channel:* [Join WhatsApp Channel](${CHANNEL_LINK})\n\n📌 *Instructions:* Open WhatsApp on your phone -> Linked Devices -> Link with phone number instead -> Enter this code.`;
             
             bot.sendMessage(chatId, responseText, { parse_mode: "Markdown", disable_web_page_preview: true });
+          } catch (err) {
+            console.error("Pairing Request Error:", err);
+            bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please check your number format and try again.`);
           }
-        } catch (err) {
-          console.error("Pairing Request Error:", err);
-          bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please verify the number format and try again.`);
         }
-      }, 4000);
 
-      sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
         if (connection === 'close') {
           const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
           if (shouldReconnect) {
-            console.log("Connection closed safely.");
+            console.log("Connection closed safely, maintaining session.");
           }
         }
       });
