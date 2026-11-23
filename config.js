@@ -4,7 +4,7 @@ const config = {
   DEVELOPER_NAME: "Shahzad Zakhmi",
   OWNER_NUMBERS: ["923256326517"],
   OWNER_NUMBER: "923256326517",
-  TG_BOT_TOKEN: process.env.TG_BOT_TOKEN || "", // یا یہاں اپنا ٹوکن لکھ دیں
+  TG_BOT_TOKEN: "9208160776:AAGCJTTVQSJ45UgBGAo23tPKc8uayuQuRsI",
   WA_CHANNEL_LINK: "https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z"
 };
 
