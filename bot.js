@@ -1,14 +1,11 @@
 import config from "./config.js";
 import fs from "fs-extra";
 import pino from "pino";
-import makeWASocket, {
-  useMultiFileAuthState,
-  delay,
-  makeCacheableSignalKeyStore,
-  Browsers
-} from "@whiskeysockets/baileys";
+import pkg from '@whiskeysockets/baileys';
+const { default: makeWASocket, useMultiFileAuthState, delay, makeCacheableSignalKeyStore, Browsers } = pkg;
 
 const activePairing = new Set();
+let isBotInitialized = false;
 
 async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
   if (activePairing.has(phoneNumber)) {
@@ -90,6 +87,9 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
 }
 
 export default async function initializeTelegramBot() {
+  if (isBotInitialized) return;
+  isBotInitialized = true;
+
   const BOT_TOKEN = config.TG_BOT_TOKEN;
   const BOT_NAME = config.BOT_NAME;
 
@@ -99,7 +99,7 @@ export default async function initializeTelegramBot() {
   
   const tbot = new TelegramBot(BOT_TOKEN, { 
     polling: {
-      interval: 2000,
+      interval: 3000,
       autoStart: true,
       params: { timeout: 10 }
     } 
@@ -112,6 +112,10 @@ export default async function initializeTelegramBot() {
   });
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
+
+  // Clear existing listeners to prevent double responses
+  tbot.removeAllListeners("message");
+  tbot.removeAllListeners("callback_query");
 
   tbot.on("message", async (msg) => {
     if (!msg.text) return;
@@ -204,5 +208,4 @@ async function sendMenu(chatId, tbot) {
 }
 
 async function sendOwner(chatId, tbot) {
-  await tbot.sendMessage(chatId, `👑 *Bot:* ${config.BOT_NAME}\n• *Owner:* ${config.OWNER_NAME}\n• *Dev:* ${config.DEVELOPER_NAME}`, { parse_mode: "Markdown" });
-}
+  
