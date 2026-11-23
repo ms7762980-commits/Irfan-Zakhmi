@@ -3,6 +3,8 @@ const TelegramBot = require('node-telegram-bot-api');
 const { default: makeWASocket, useMultiFileAuthState, delay } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 
+const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z";
+
 console.log(`Initialising ${botName}...`);
 console.log(`Board: ${boardName}`);
 console.log(`Developer: ${developerName}`);
@@ -15,14 +17,14 @@ function startBot() {
   }
 
   const bot = new TelegramBot(telegramToken, { polling: true });
-  console.log(`${botName} is successfully connected and listening to Telegram with Pairing System!`);
+  console.log(`${botName} is successfully connected and listening to Telegram with Full Power!`);
 
   // /start کمانڈ
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const userName = msg.from.first_name || "User";
     
-    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +${ownerNumber}\n\nTo get WhatsApp pairing code, send:\n\`pair your_number\` (e.g. pair 923256326517)`;
+    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +${ownerNumber}\n\nTo get your WhatsApp pairing code, use the command:\n\`/pair your_number\`\n(Example: \`/pair 923256326517\`)`;
     
     const opts = {
       parse_mode: "Markdown",
@@ -31,6 +33,9 @@ function startBot() {
           [
             { text: "🤖 Bot Status", callback_data: "status" },
             { text: "👑 Owner Info", callback_data: "owner" }
+          ],
+          [
+            { text: "📢 Join WhatsApp Channel", url: CHANNEL_LINK }
           ]
         ]
       }
@@ -39,7 +44,7 @@ function startBot() {
     bot.sendMessage(chatId, replyText, opts);
   });
 
-  // بٹन کلक ہینڈلر
+  // بٹن کلک ہینڈلر
   bot.on('callback_query', (callbackQuery) => {
     const message = callbackQuery.message;
     const data = callbackQuery.data;
@@ -48,51 +53,47 @@ function startBot() {
     if (data === 'status') {
       bot.sendMessage(chatId, `✅ *${botName}* is 24/7 Active on Railway Server!`, { parse_mode: "Markdown" });
     } else if (data === 'owner') {
-      bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +${ownerNumber}`, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +${ownerNumber}\nChannel: ${CHANNEL_LINK}`, { parse_mode: "Markdown" });
     }
     bot.answerCallbackQuery(callbackQuery.id);
   });
 
-  // پیئرنگ کوڈ اور میसेज ہینڈلر
-  bot.on('message', async (msg) => {
+  // /pair کمانড ہینڈلر
+  bot.onText(/\/pair (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const text = msg.text;
+    let phoneNumber = match[1].trim().replace(/[^0-9]/g, '');
+    
+    if (phoneNumber.length < 10) {
+      bot.sendMessage(chatId, `❌ Please provide a valid phone number with country code.\nExample: \`/pair 923256326517\``, { parse_mode: "Markdown" });
+      return;
+    }
 
-    if (!text || text.startsWith('/')) return;
+    bot.sendMessage(chatId, `⏳ *[${botName}]*\nGenerating official WhatsApp Pairing Code for \`+${phoneNumber}\`...\nPlease wait a moment.`, { parse_mode: "Markdown" });
 
-    if (text.toLowerCase().startsWith('pair ')) {
-      let phoneNumber = text.replace('pair ', '').trim().replace(/[^0-9]/g, '');
-      
-      if (phoneNumber.length < 10) {
-        bot.sendMessage(chatId, `❌ Please provide a valid phone number with country code (e.g., pair 923256326517)`);
-        return;
+    try {
+      const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}`);
+      const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' })
+      });
+
+      if (!sock.authState.creds.registered) {
+        await delay(2000);
+        let pairingCode = await sock.requestPairingCode(phoneNumber);
+        pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
+        
+        const responseText = `✨ *${botName} Official Pairing System* ✨\n\n📱 *Number:* \`+${phoneNumber}\`\n🔑 *Pairing Code:* \`\`\`${pairingCode}\`\`\`\n\n📢 *Channel:* [Join WhatsApp Channel](${CHANNEL_LINK})\n\n📌 *Instructions:* Open WhatsApp on your phone -> Linked Devices -> Link with phone number instead -> Enter this code.`;
+        
+        bot.sendMessage(chatId, responseText, { parse_mode: "Markdown", disable_web_page_preview: true });
+      } else {
+        bot.sendMessage(chatId, `⚠️ This number is already registered or connected!`);
       }
 
-      bot.sendMessage(chatId, `⏳ Generating WhatsApp Pairing Code for \`+${phoneNumber}\`...\nPlease wait up to 15 seconds.`, { parse_mode: "Markdown" });
-
-      try {
-        const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}`);
-        const sock = makeWASocket({
-          auth: state,
-          printQRInTerminal: false,
-          logger: pino({ level: 'silent' })
-        });
-
-        if (!sock.authState.creds.registered) {
-          await delay(1500);
-          let pairingCode = await sock.requestPairingCode(phoneNumber);
-          pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
-          
-          bot.sendMessage(chatId, `✅ *Your WhatsApp Pairing Code:*\n\`\`\`${pairingCode}\`\`\`\n\n📌 *How to use:* Open WhatsApp -> Linked Devices -> Link with phone number instead -> Enter this code.`, { parse_mode: "Markdown" });
-        } else {
-          bot.sendMessage(chatId, `⚠️ This number is already connected or registered!`);
-        }
-
-        sock.ev.on('creds.update', saveCreds);
-      } catch (error) {
-        console.error(error);
-        bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please try again later.`);
-      }
+      sock.ev.on('creds.update', saveCreds);
+    } catch (error) {
+      console.error(error);
+      bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please try again later.`);
     }
   });
 }
