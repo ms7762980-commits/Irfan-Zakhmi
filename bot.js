@@ -8,15 +8,18 @@ import makeWASocket, {
   Browsers
 } from "@whiskeysockets/baileys";
 
-let activePairingNumber = null;
+let isPairingActive = false;
 
-async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
-  if (activePairingNumber === phoneNumber) {
-    return; // Block duplicate parallel execution for the exact same number
+async function startWhatsAppSession(phoneNumber, chatId, tbot, useQR = false) {
+  if (isPairingActive) {
+    if (chatId) {
+      await tbot.sendMessage(chatId, `⚠️ ایک سیشن پہلے ہی پروسیس میں ہے۔ براہ کرم تھوڑا انتظار کریں۔`, { parse_mode: "Markdown" });
+    }
+    return;
   }
 
-  activePairingNumber = phoneNumber;
-  const sessionFolder = `./sessions/${phoneNumber}`;
+  isPairingActive = true;
+  const sessionFolder = `./sessions/${phoneNumber || 'qr_session'}`;
   
   try {
     if (await fs.pathExists(sessionFolder)) {
@@ -31,33 +34,50 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
       },
-      printQRInTerminal: false,
+      printQRInTerminal: useQR, // QR Code terminal par print karne ke liye
       logger: pino({ level: "silent" }),
       browser: Browsers.macOS("Desktop"),
     });
 
-    if (!sock.authState.creds.registered) {
-      await delay(5000); // Give socket time to stabilize
+    // Agar QR code ka tareeqa ho aur number na diya ho
+    if (useQR) {
+      sock.ev.on("connection.update", async (update) => {
+        const { connection, qr } = update;
+        if (qr && chatId) {
+          await tbot.sendMessage(chatId, `📷 ریلوے لاگز (Railway Logs) چیک کریں وہاں واٹس ایپ کا QR Code آ گیا ہے جسے آپ اسکین کر سکتے ہیں!`, { parse_mode: "Markdown" });
+        }
+        if (connection === "open") {
+          isPairingActive = false;
+          if (chatId) {
+            await tbot.sendMessage(chatId, `🎉 *${config.BOT_NAME}* کامیابی سے کیو آر کوڈ کے ذریعے جڑ گیا ہے!`, { parse_mode: "Markdown" });
+          }
+        }
+      });
+    } 
+    else if (phoneNumber && !sock.authState.creds.registered) {
+      await delay(4000);
       const code = await sock.requestPairingCode(phoneNumber);
       const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
       
-      await tbot.sendMessage(
-        chatId,
-        `🔑 *WhatsApp Pairing Code:* \`${formattedCode}\`\n\n` +
-        `📱 *Number:* \`+${phoneNumber}\`\n\n` +
-        `📌 *How to connect:*\n` +
-        `1. Open WhatsApp > Linked Devices\n` +
-        `2. Tap Link a Device > Link with phone number\n` +
-        `3. Enter the code above within 30 seconds!`,
-        {
-          parse_mode: "Markdown",
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "📢 WhatsApp Channel", url: config.WA_CHANNEL_LINK }]
-            ]
+      if (chatId) {
+        await tbot.sendMessage(
+          chatId,
+          `🔑 *WhatsApp Pairing Code:* \`${formattedCode}\`\n\n` +
+          `📱 *Number:* \`+${phoneNumber}\`\n\n` +
+          `📌 *ترتیب:*\n` +
+          `1. WhatsApp > Linked Devices کھولیں\n` +
+          `2. Link with phone number پر کلک کریں\n` +
+          `3. اوپر والا کوڈ درج کریں!`,
+          {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "📢 WhatsApp Channel", url: config.WA_CHANNEL_LINK }]
+              ]
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     sock.ev.on("creds.update", saveCreds);
@@ -65,23 +85,24 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
     sock.ev.on("connection.update", async (update) => {
       const { connection } = update;
       if (connection === "open") {
-        activePairingNumber = null;
-        await tbot.sendMessage(
-          chatId,
-          `🎉 *${config.BOT_NAME} Connected Successfully!*\nNumber: \`+${phoneNumber}\` is now active 24/7.`,
-          { parse_mode: "Markdown" }
-        );
+        isPairingActive = false;
+        if (chatId) {
+          await tbot.sendMessage(
+            chatId,
+            `🎉 *${config.BOT_NAME} Connected Successfully!*\nNumber: \`+${phoneNumber}\` is now active 24/7.`,
+            { parse_mode: "Markdown" }
+          );
+        }
       }
     });
 
   } catch (err) {
-    await tbot.sendMessage(chatId, `❌ Pairing Error: ${err.message}`);
+    isPairingActive = false;
+    if (chatId) {
+      await tbot.sendMessage(chatId, `❌ Error: ${err.message}`);
+    }
   } finally {
-    setTimeout(() => {
-      if (activePairingNumber === phoneNumber) {
-        activePairingNumber = null;
-      }
-    }, 20000);
+    setTimeout(() => { isPairingActive = false; }, 15000);
   }
 }
 
@@ -93,9 +114,12 @@ export default async function initializeTelegramBot() {
 
   const { default: TelegramBot } = await import("node-telegram-bot-api");
   
-  // Use explicit safe polling settings to prevent duplicate event loops
   const tbot = new TelegramBot(BOT_TOKEN, { 
-    polling: true 
+    polling: {
+      interval: 3000,
+      autoStart: true,
+      params: { timeout: 10 }
+    } 
   });
 
   tbot.on("polling_error", (error) => {
@@ -106,21 +130,15 @@ export default async function initializeTelegramBot() {
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
-  let processedUpdates = new Set();
+  let lastProcessedUpdateId = null;
 
   tbot.on("message", async (msg) => {
     if (!msg.text) return;
-
-    // Strict deduplication using Telegram message update ID
-    const updateId = msg.message_id + "_" + msg.chat.id + "_" + msg.date;
-    if (processedUpdates.has(updateId)) return;
-    processedUpdates.add(updateId);
-
-    // Keep set clean
-    if (processedUpdates.size > 100) {
-      const firstKey = processedUpdates.values().next().value;
-      processedUpdates.delete(firstKey);
-    }
+    
+    // Strict duplication guard to stop double trigger
+    const currentUpdateKey = `${msg.chat.id}_${msg.message_id}`;
+    if (lastProcessedUpdateId === currentUpdateKey) return;
+    lastProcessedUpdateId = currentUpdateKey;
 
     const chatId = msg.chat.id;
     const text = msg.text.trim();
@@ -130,13 +148,14 @@ export default async function initializeTelegramBot() {
         `✨ *${BOT_NAME}* is active and running 24/7!\n\n` +
         `👤 *Owner:* ${config.OWNER_NAME}\n` +
         `🛠️ *Developer:* ${config.DEVELOPER_NAME}\n\n` +
-        `👇 *Choose an option below:*`;
+        `👇 *طریقہ کار منتخب کریں:*`;
 
       await tbot.sendMessage(chatId, welcomeMsg, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🔗 Pair WhatsApp", callback_data: "help_pair" }],
+            [{ text: "🔗 Pair with Phone Number", callback_data: "help_pair" }],
+            [{ text: "📷 Generate QR Code", callback_data: "gen_qr" }],
             [{ text: "📋 View Menu", callback_data: "menu" }],
             [{ text: "👑 Owner Info", callback_data: "owner" }],
             [{ text: "📢 Join Channel", url: config.WA_CHANNEL_LINK }]
@@ -148,12 +167,12 @@ export default async function initializeTelegramBot() {
       const rawNumber = parts[1] ? parts[1].replace(/[^0-9]/g, "") : "";
 
       if (!rawNumber || rawNumber.length < 10) {
-        await tbot.sendMessage(chatId, `⚠️ Please enter a valid number with country code!\nExample: \`/pair 923256326517\``, { parse_mode: "Markdown" });
+        await tbot.sendMessage(chatId, `⚠️ براہ کرم ملک کے کوڈ کے ساتھ صحیح نمبر لکھیں!\nمثال: \`/pair 923256326517\``, { parse_mode: "Markdown" });
         return;
       }
 
-      await tbot.sendMessage(chatId, `⏳ Generating fresh pairing code for \`+${rawNumber}\`... Please wait.`, { parse_mode: "Markdown" });
-      await startWhatsAppPairing(rawNumber, chatId, tbot);
+      await tbot.sendMessage(chatId, `⏳ نمبر \`+${rawNumber}\` کے لیے نیا پیئرنگ کوڈ تیار کیا جا رہا ہے...`, { parse_mode: "Markdown" });
+      await startWhatsAppSession(rawNumber, chatId, tbot, false);
     } else if (text === "/menu" || text === "/help") {
       await sendMenu(chatId, tbot);
     } else if (text === "/owner") {
@@ -172,7 +191,10 @@ export default async function initializeTelegramBot() {
     } else if (data === "owner") {
       await sendOwner(chatId, tbot);
     } else if (data === "help_pair") {
-      await tbot.sendMessage(chatId, `📱 To pair your WhatsApp, send your number like this:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
+      await tbot.sendMessage(chatId, `📱 نمبر کے ذریعے پیئر کرنے کے لیے اس طرح بھیجیں:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
+    } else if (data === "gen_qr") {
+      await tbot.sendMessage(chatId, `⏳ QR Code جنریٹ ہو رہا ہے، ریلوے لاگز (Railway Logs) چیک کریں!`, { parse_mode: "Markdown" });
+      await startWhatsAppSession(null, chatId, tbot, true);
     }
     try {
       await tbot.answerCallbackQuery(callbackQuery.id);
@@ -187,7 +209,7 @@ async function sendMenu(chatId, tbot) {
     `╔═══════════════════════╗\n` +
     `║   🔥 *${config.BOT_NAME}* 🔥   ║\n` +
     `╚═══════════════════════╝\n\n` +
-    `📌 *Commands Menu:*\n` +
+    `📌 *مینو لسٹ:*\n` +
     `│ • adhan\n` +
     `│ • namaz_times\n` +
     `│ • tiktok\n` +
@@ -195,14 +217,15 @@ async function sendMenu(chatId, tbot) {
     `│ • video\n` +
     `│ • chatgpt\n` +
     `│ • gemini\n\n` +
-    `📌 *To pair WhatsApp, send:*\n` +
-    `\`/pair your_number\``;
+    `📌 *واٹس ایپ جوڑنے کے لیے لکھیں:*\n` +
+    `\`/pair آپ_کا_نمبر\``;
 
   await tbot.sendMessage(chatId, lineMenu, {
     parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
-        [{ text: "🔗 Pair WhatsApp", callback_data: "help_pair" }],
+        [{ text: "🔗 Pair Number", callback_data: "help_pair" }],
+        [{ text: "📷 QR Code", callback_data: "gen_qr" }],
         [{ text: "👑 Owner Info", callback_data: "owner" }],
         [{ text: "📢 Official Channel", url: config.WA_CHANNEL_LINK }]
       ]
