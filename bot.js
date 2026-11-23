@@ -11,20 +11,22 @@ import makeWASocket, {
 async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
   const sessionFolder = `./sessions/${phoneNumber}`;
   
-  if (await fs.pathExists(sessionFolder)) {
-    await fs.remove(sessionFolder);
-  }
-  await fs.ensureDir(sessionFolder);
+  try {
+    if (await fs.pathExists(sessionFolder)) {
+      await fs.remove(sessionFolder);
+    }
+    await fs.ensureDir(sessionFolder);
+  } catch (e) {}
 
   const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
 
   const sock = makeWASocket({
     auth: {
       creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
+      keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
     },
     printQRInTerminal: false,
-    logger: pino({ level: "fatal" }),
+    logger: pino({ level: "silent" }),
     browser: Browsers.ubuntu("Chrome"),
   });
 
@@ -36,7 +38,7 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
       
       await tbot.sendMessage(
         chatId,
-        `🔑 *WhatsApp Code:* \`${formattedCode}\`\n\n` +
+        `🔑 *WhatsApp Pairing Code:* \`${formattedCode}\`\n\n` +
         `📱 *Number:* \`+${phoneNumber}\`\n\n` +
         `📌 *How to connect:*\n` +
         `1. Open WhatsApp > Linked Devices\n` +
@@ -67,21 +69,23 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
         { parse_mode: "Markdown" }
       );
       
-      await sock.sendMessage(sock.user.id, {
-        image: { url: config.BOT_PIC_URL },
-        caption: 
-          `┏━━━〔 *${config.BOT_NAME}* 〕━━━┓\n` +
-          `┃ ⚡ *STATUS:* \`ACTIVATED\`\n` +
-          `┃ 👑 *OWNER:* \`${config.OWNER_NAME}\`\n` +
-          `┃ 🛠️ *DEV:* \`${config.DEVELOPER_NAME}\`\n` +
-          `┃ 🔢 *CMDS:* \`1028+\`\n` +
-          `┗━━━━━━━━━━━━━━━━┛\n\n` +
-          `✨ *Type .menu to view all categories!*`
-      });
+      try {
+        await sock.sendMessage(sock.user.id, {
+          image: { url: config.BOT_PIC_URL },
+          caption: 
+            `┏━━━〔 *${config.BOT_NAME}* 〕━━━┓\n` +
+            `┃ ⚡ *STATUS:* \`ACTIVATED\`\n` +
+            `┃ 👑 *OWNER:* \`${config.OWNER_NAME}\`\n` +
+            `┃ 🛠️ *DEV:* \`${config.DEVELOPER_NAME}\`\n` +
+            `┃ 🔢 *CMDS:* \`1028+\`\n` +
+            `┗━━━━━━━━━━━━━━━━┛\n\n` +
+            `✨ *Type .menu to view all categories!*`
+        });
+      } catch (e) {}
     }
   });
 
-  // All Ahmad MD Total Commands & Menus (Line-by-Line)
+  // WhatsApp Commands & Line-by-Line Menus
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const m = messages[0];
     if (!m.message || m.key.fromMe) return;
@@ -236,11 +240,6 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
         `│ • ownername\n` +
         `│ • stickername\n\n` +
 
-        `━━━〔 ✦ *MAIN COMMANDS* ✦ 〕━━━\n` +
-        `│ • \`.menu\`\n` +
-        `│ • \`.ping\`\n` +
-        `│ • \`.owner\`\n` +
-        `│ • \`.channel\`\n\n` +
         `📢 *Channel:* ${config.WA_CHANNEL_LINK}`;
 
       await sock.sendMessage(from, {
@@ -268,6 +267,8 @@ export default async function initializeTelegramBot() {
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
+  let isPairingInProgress = false;
+
   tbot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.trim() : "";
@@ -284,7 +285,8 @@ export default async function initializeTelegramBot() {
         reply_markup: {
           inline_keyboard: [
             [{ text: "🔗 Pair WhatsApp Number", callback_data: "help_pair" }],
-            [{ text: "📋 View Menu", callback_data: "menu" }, { text: "👑 Owner Info", callback_data: "owner" }],
+            [{ text: "📋 View Line-by-Line Menu", callback_data: "menu" }],
+            [{ text: "👑 Owner Info", callback_data: "owner" }],
             [{ text: "📢 Join WhatsApp Channel", url: config.WA_CHANNEL_LINK }]
           ]
         }
@@ -301,63 +303,8 @@ export default async function initializeTelegramBot() {
         );
       }
 
-      await tbot.sendMessage(chatId, `⏳ Generating fresh pairing code for \`+${rawNumber}\`... Please wait.`, { parse_mode: "Markdown" });
-      await startWhatsAppPairing(rawNumber, chatId, tbot);
-    } else if (text === "/menu" || text === "/help") {
-      sendMenu(chatId, tbot);
-    } else if (text === "/owner") {
-      sendOwner(chatId, tbot);
-    }
-  });
-
-  tbot.on("callback_query", async (callbackQuery) => {
-    const msg = callbackQuery.message;
-    const chatId = msg.chat.id;
-    const data = callbackQuery.data;
-
-    if (data === "menu") {
-      sendMenu(chatId, tbot);
-    } else if (data === "owner") {
-      sendOwner(chatId, tbot);
-    } else if (data === "help_pair") {
-      tbot.sendMessage(
-        chatId,
-        `📱 *How to connect:*\n\nSend your number like this:\n\`/pair 923256326517\``,
-        { parse_mode: "Markdown" }
-      );
-    }
-    tbot.answerCallbackQuery(callbackQuery.id);
-  });
-
-  return tbot;
-}
-
-function sendMenu(chatId, tbot) {
-  const menuMsg = `📋 *${config.BOT_NAME} DASHBOARD MENU*`;
-  tbot.sendMessage(chatId, menuMsg, {
-    parse_mode: "Markdown",
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "🔗 How to Pair WhatsApp", callback_data: "help_pair" }],
-        [{ text: "👑 Owner Info", callback_data: "owner" }],
-        [{ text: "📢 Official WhatsApp Channel", url: config.WA_CHANNEL_LINK }]
-      ]
-    }
-  });
-}
-
-function sendOwner(chatId, tbot) {
-  tbot.sendMessage(
-    chatId,
-    `👑 *Bot Information*\n\n• *Bot:* ${config.BOT_NAME}\n• *Owner:* ${config.OWNER_NAME}\n• *Dev:* ${config.DEVELOPER_NAME}\n• *Channel:* ${config.WA_CHANNEL_LINK}`,
-    {
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "📢 Join Channel", url: config.WA_CHANNEL_LINK }],
-          [{ text: "🏠 Main Menu", callback_data: "menu" }]
-        ]
+      if (isPairingInProgress) {
+        return tbot.sendMessage(chatId, `⏳ *Pairing already in progress!* Please wait for the code.`);
       }
-    }
-  );
-}
+
+      isPairing
