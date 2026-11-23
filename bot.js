@@ -17,14 +17,14 @@ function startBot() {
   }
 
   const bot = new TelegramBot(telegramToken, { polling: true });
-  console.log(`${botName} is successfully connected and listening to Telegram with Full Power!`);
+  console.log(`${botName} is successfully connected and listening to Telegram!`);
 
-  // /start کمانڈ
+  // /start کمانڈ اور گائیڈ لائنز
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const userName = msg.from.first_name || "User";
     
-    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +${ownerNumber}\n\nTo get your WhatsApp pairing code, use the command:\n\`/pair your_number\`\n(Example: \`/pair 923256326517\`)`;
+    const replyText = `🔥 *Welcome to ${botName}* 🔥\n\nHello ${userName}!\nThis is the official 24/7 active bot managed by *${ownerName}*.\n\n👑 *Owner:* ${ownerName}\n📱 *Number:* +\`${ownerNumber}\`\n\nTo get your WhatsApp pairing code, use the exact command with your number like this:\n\`/pair ${ownerNumber}\``;
     
     const opts = {
       parse_mode: "Markdown",
@@ -44,7 +44,7 @@ function startBot() {
     bot.sendMessage(chatId, replyText, opts);
   });
 
-  // بٹن کلک ہینڈلر
+  // بٹن ہینڈلر
   bot.on('callback_query', (callbackQuery) => {
     const message = callbackQuery.message;
     const data = callbackQuery.data;
@@ -53,25 +53,25 @@ function startBot() {
     if (data === 'status') {
       bot.sendMessage(chatId, `✅ *${botName}* is 24/7 Active on Railway Server!`, { parse_mode: "Markdown" });
     } else if (data === 'owner') {
-      bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +${ownerNumber}\nChannel: ${CHANNEL_LINK}`, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `👑 *Owner & Developer*\n\nName: ${ownerName}\nNumber: +\`${ownerNumber}\`\nChannel: ${CHANNEL_LINK}`, { parse_mode: "Markdown" });
     }
     bot.answerCallbackQuery(callbackQuery.id);
   });
 
-  // /pair کمانড ہینڈلر
+  // /pair کمانڈ ہینڈلر (مضبوط کنکشن کے ساتھ)
   bot.onText(/\/pair (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     let phoneNumber = match[1].trim().replace(/[^0-9]/g, '');
     
     if (phoneNumber.length < 10) {
-      bot.sendMessage(chatId, `❌ Please provide a valid phone number with country code.\nExample: \`/pair 923256326517\``, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `❌ Please provide a valid phone number with country code.\nExample: \`/pair ${ownerNumber}\``, { parse_mode: "Markdown" });
       return;
     }
 
-    bot.sendMessage(chatId, `⏳ *[${botName}]*\nGenerating official WhatsApp Pairing Code for \`+${phoneNumber}\`...\nPlease wait a moment.`, { parse_mode: "Markdown" });
+    bot.sendMessage(chatId, `⏳ *[${botName}]*\nGenerating official WhatsApp Pairing Code for \`+${phoneNumber}\`...\nPlease wait a few seconds.`, { parse_mode: "Markdown" });
 
     try {
-      const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}`);
+      const { state, saveCreds } = await useMultiFileAuthState(`./sessions_${chatId}_${Date.now()}`);
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
@@ -79,7 +79,7 @@ function startBot() {
       });
 
       if (!sock.authState.creds.registered) {
-        await delay(2000);
+        await delay(3000);
         let pairingCode = await sock.requestPairingCode(phoneNumber);
         pairingCode = pairingCode?.match(/.{1,4}/g)?.join("-") || pairingCode;
         
@@ -93,7 +93,7 @@ function startBot() {
       sock.ev.on('creds.update', saveCreds);
     } catch (error) {
       console.error(error);
-      bot.sendMessage(chatId, `❌ Failed to generate pairing code. Please try again later.`);
+      bot.sendMessage(chatId, `❌ Connection timeout or network issue. Please try again with \`/pair ${phoneNumber}\`.`);
     }
   });
 }
