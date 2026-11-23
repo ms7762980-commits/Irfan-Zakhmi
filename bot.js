@@ -1,10 +1,9 @@
 /**
- * Ultimate WhatsApp Bot with Web Pairing, Auto-Reaction & Full Menu
- * Owner & Creator: شہزاد زخمی (923256326517)
- * Channel: https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z
+ * Clean & Fixed WhatsApp Bot Code
+ * Owner: شہزاد زخمی (923256326517)
  */
 
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const http = require('http');
@@ -15,35 +14,73 @@ const server = http.createServer(app);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 1. ویب پیئرنگ پینل (Web Pairing Panel for Users)
 app.get('/', (req, res) => {
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="ur">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>شہزاد زخمی بوٹ - Pairing Panel</title>
-            <style>
-                body { background-color: #0f172a; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 40px; }
-                .container { background: #1e293b; padding: 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.6); max-width: 400px; width: 100%; }
-                input { padding: 12px; width: 85%; margin: 15px 0; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
-                button { background: #22c55e; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-                button:hover { background: #16a34a; }
-                #code-display { font-size: 20px; color: #38bdf8; margin-top: 20px; font-weight: bold; word-break: break-all; }
-                .channel-link { margin-top: 20px; display: block; color: #facc15; text-decoration: none; font-size: 14px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h2>شہزاد زخمی واٹس ایپ بوٹ پینل</h2>
-                <p>اپنا واٹس ایپ نمبر کنٹری کوڈ کے ساتھ لکھیں (مثلاً: 92325...)</p>
-                <input type="text" id="phone" placeholder="923256326517">
-                <br>
-                <button onclick="getPairingCode()">کوڈ حاصل کریں</button>
-                <div id="code-display"></div>
-                <a class="channel-link" href="https://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z" target="_blank">فالو کریں: شہزاد زخمی واٹس ایپ چینل</a>
-            </div>
-            <script>
-                async function getPairingCode() {
-                    const phone = document.getElementById('phone').value
+    res.send('<h2>Shahzad Zakhmi Bot is Running Successfully!</h2>');
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+async function startBot() {
+    const { state, saveCreds } = await useMultiFileAuthState('./session');
+    
+    const sock = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        auth: state
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection } = update;
+        if (connection === 'open') {
+            console.log('Bot is online and connected!');
+        } else if (connection === 'close') {
+            setTimeout(startBot, 5000);
+        }
+    });
+
+    sock.ev.on('messages.upsert', async (chatUpdate) => {
+        try {
+            const mek = chatUpdate.messages[0];
+            if (!mek.message) return;
+            
+            const messageType = Object.keys(mek.message)[0];
+            const body = (messageType === 'conversation') ? mek.message.conversation :
+                         (messageType === 'extendedTextMessage') ? mek.message.extendedTextMessage.text : '';
+            
+            const from = mek.key.remoteJid;
+            
+            if (!body.startsWith(".")) return;
+
+            // آٹو ری ایکشن
+            await sock.sendMessage(from, { react: { text: "🔥", key: mek.key } });
+
+            const args = body.slice(1).trim().split(/ +/);
+            const command = args.shift().toLowerCase();
+
+            if (command === 'menu' || command === 'm') {
+                let menuText = ` ━━━〔 ✦ ɪsʟᴀᴍɪᴄ ᴍᴇɴᴜ ✦ 〕━━━\n` +
+                               `│  •  adhan\n│  •  namaz_times\n` +
+                               ` ━━━〔 ✦ ᴍᴀɪɴ ᴍᴇɴᴜ ✦ 〕━━━\n` +
+                               `│  •  menu\n│  •  ping\n` +
+                               `─────────────────\n` +
+                               `Follow Channel:\nhttps://whatsapp.com/channel/0029VbEKCPj0gcfIJkc5XE3Z`;
+
+                await sock.sendMessage(from, { 
+                    image: { url: "https://share.google/images/FOCxlHWy1akjsZxd8" }, 
+                    caption: menuText 
+                }, { quoted: mek });
+            }
+            else if (command === 'ping') {
+                await sock.sendMessage(from, { text: `⚡ Pong! Bot is active.` }, { quoted: mek });
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    });
+}
+
+startBot();
