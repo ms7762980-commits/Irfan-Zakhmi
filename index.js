@@ -5,7 +5,6 @@ import path from "path";
 import fs from "fs-extra";
 import getPort from "get-port";
 import { fileURLToPath } from "url";
-import { manager, main, db } from "./lib/client.js";
 import initializeTelegramBot from "./bot.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +20,6 @@ app.get("/", (_req, res) => {
   res.json({
     ok: true,
     status: "Irfan Zakhmi MD Bot is Running",
-    sessions: manager.list().length,
   });
 });
 
@@ -30,14 +28,15 @@ const PORT = process.env.PORT || (await getPort({ port: 3000 }));
 (async function init() {
   try {
     console.log("[app] Initializing Irfan Zakhmi MD...");
-    await main({ autoStartAll: true });
 
     const server = app.listen(PORT, () => {
       console.log(`[app] 🚀 Server listening on port ${PORT}`);
     });
 
     try {
-      await initializeTelegramBot(manager);
+      // Initialize Telegram Bot
+      await initializeTelegramBot();
+      console.log("🤖 Telegram Bot started successfully!");
     } catch (error) {
       console.error("Telegram bot error:", error);
     }
