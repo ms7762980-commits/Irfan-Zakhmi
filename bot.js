@@ -8,7 +8,15 @@ import makeWASocket, {
   Browsers
 } from "@whiskeysockets/baileys";
 
+// Prevent multiple pairing triggers for the same number
+const activePairing = new Set();
+
 async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
+  if (activePairing.has(phoneNumber)) {
+    return tbot.sendMessage(chatId, `⚠️ Pairing is already in progress for \`+${phoneNumber}\`. Please wait a moment.`, { parse_mode: "Markdown" });
+  }
+  
+  activePairing.add(phoneNumber);
   const sessionFolder = `./sessions/${phoneNumber}`;
   
   try {
@@ -18,27 +26,27 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
     await fs.ensureDir(sessionFolder);
   } catch (e) {}
 
-  const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
 
-  const sock = makeWASocket({
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
-    },
-    printQRInTerminal: false,
-    logger: pino({ level: "silent" }),
-    browser: Browsers.ubuntu("Chrome"),
-  });
+    const sock = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+      },
+      printQRInTerminal: false,
+      logger: pino({ level: "silent" }),
+      browser: Browsers.macOS("Chrome"), // Changed to macOS/Chrome for better WA compatibility
+    });
 
-  if (!sock.authState.creds.registered) {
-    await delay(3000);
-    try {
+    if (!sock.authState.creds.registered) {
+      await delay(4000);
       const code = await sock.requestPairingCode(phoneNumber);
       const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
       
       await tbot.sendMessage(
         chatId,
-        `🔑 *WhatsApp Code:* \`${formattedCode}\`\n\n` +
+        `🔑 *WhatsApp Pairing Code:* \`${formattedCode}\`\n\n` +
         `📱 *Number:* \`+${phoneNumber}\`\n\n` +
         `📌 *How to connect:*\n` +
         `1. Open WhatsApp > Linked Devices\n` +
@@ -53,47 +61,28 @@ async function startWhatsAppPairing(phoneNumber, chatId, tbot) {
           }
         }
       );
-    } catch (err) {
-      await tbot.sendMessage(chatId, `❌ Error: ${err.message}`);
     }
+
+    sock.ev.on("creds.update", saveCreds);
+
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
+      if (connection === "open") {
+        activePairing.delete(phoneNumber);
+        await tbot.sendMessage(
+          chatId,
+          `🎉 *${config.BOT_NAME} Connected Successfully!*\nNumber: \`+${phoneNumber}\` is now active 24/7.`,
+          { parse_mode: "Markdown" }
+        );
+      } else if (connection === "close") {
+        activePairing.delete(phoneNumber);
+      }
+    });
+
+  } catch (err) {
+    activePairing.delete(phoneNumber);
+    await tbot.sendMessage(chatId, `❌ Pairing Error: ${err.message}`);
   }
-
-  sock.ev.on("creds.update", saveCreds);
-
-  sock.ev.on("connection.update", async (update) => {
-    const { connection } = update;
-    if (connection === "open") {
-      await tbot.sendMessage(
-        chatId,
-        `🎉 *${config.BOT_NAME} Connected Successfully!*\nNumber: \`+${phoneNumber}\` is now active 24/7.`,
-        { parse_mode: "Markdown" }
-      );
-    }
-  });
-
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    const m = messages[0];
-    if (!m.message || m.key.fromMe) return;
-    const from = m.key.remoteJid;
-    const body = m.message.conversation || m.message.extendedTextMessage?.text || "";
-    const cmd = body.toLowerCase().trim();
-
-    if (cmd === ".ping" || cmd === "ping") {
-      await sock.sendMessage(from, { text: `🚀 *${config.BOT_NAME}* is Active & Fast 24/7!` }, { quoted: m });
-    } 
-    else if (cmd === ".menu" || cmd === "menu" || cmd === ".help" || cmd === ".m") {
-      const fullMenu = 
-        `━━━〔 ✦ *ISLAMIC MENU* ✦ 〕━━━\n` +
-        `│ • adhan\n│ • namaz_times\n│ • dua_morning\n│ • surah_yaseen\n\n` +
-        `━━━〔 ✦ *DOWNLOAD MENU* ✦ 〕━━━\n` +
-        `│ • tiktok\n│ • play\n│ • video\n│ • apk\n\n` +
-        `━━━〔 ✦ *AI MENU* ✦ 〕━━━\n` +
-        `│ • chatgpt\n│ • gemini\n│ • deepseek\n\n` +
-        `📢 *Channel:* ${config.WA_CHANNEL_LINK}`;
-
-      await sock.sendMessage(from, { text: fullMenu }, { quoted: m });
-    }
-  });
 }
 
 export default async function initializeTelegramBot() {
@@ -103,28 +92,31 @@ export default async function initializeTelegramBot() {
   if (!BOT_TOKEN) return null;
 
   const { default: TelegramBot } = await import("node-telegram-bot-api");
-  // polling error handling added to prevent 409 conflict crashes
+  
+  // Single polling instance with strict conflict avoidance
   const tbot = new TelegramBot(BOT_TOKEN, { 
     polling: {
-      interval: 2000,
+      interval: 3000,
       autoStart: true,
       params: { timeout: 10 }
     } 
   });
 
   tbot.on("polling_error", (error) => {
-    // Suppress minor conflict logs to keep console clean
     if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
       return;
     }
-    console.error(`[Telegram Polling Error]:`, error.message);
   });
 
   console.log(`🤖 Telegram Bot initialized for ${BOT_NAME}`);
 
+  // Clean single listener with lock flag to prevent double processing
+  let isProcessing = false;
+
   tbot.on("message", async (msg) => {
+    if (!msg.text || isProcessing) return;
     const chatId = msg.chat.id;
-    const text = msg.text ? msg.text.trim() : "";
+    const text = msg.text.trim();
 
     if (text === "/start") {
       const welcomeMsg =
@@ -133,7 +125,7 @@ export default async function initializeTelegramBot() {
         `🛠️ *Developer:* ${config.DEVELOPER_NAME}\n\n` +
         `👇 *Choose an option:*`;
 
-      tbot.sendMessage(chatId, welcomeMsg, {
+      await tbot.sendMessage(chatId, welcomeMsg, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
@@ -149,58 +141,57 @@ export default async function initializeTelegramBot() {
       const rawNumber = parts[1] ? parts[1].replace(/[^0-9]/g, "") : "";
 
       if (!rawNumber || rawNumber.length < 10) {
-        return tbot.sendMessage(chatId, `⚠️ Please enter a valid number with country code!\nExample: \`/pair 923256326517\``, { parse_mode: "Markdown" });
+        await tbot.sendMessage(chatId, `⚠️ Please enter a valid number with country code!\nExample: \`/pair 923256326517\``, { parse_mode: "Markdown" });
+        return;
       }
 
-      tbot.sendMessage(chatId, `⏳ Generating fresh pairing code for \`+${rawNumber}\`... Please wait.`, { parse_mode: "Markdown" });
-      try {
-        await startWhatsAppPairing(rawNumber, chatId, tbot);
-      } catch (err) {
-        tbot.sendMessage(chatId, `❌ Error: ${err.message}`);
-      }
+      await tbot.sendMessage(chatId, `⏳ Generating fresh pairing code for \`+${rawNumber}\`... Please wait.`, { parse_mode: "Markdown" });
+      await startWhatsAppPairing(rawNumber, chatId, tbot);
     } else if (text === "/menu" || text === "/help") {
-      sendMenu(chatId, tbot);
+      await sendMenu(chatId, tbot);
     } else if (text === "/owner") {
-      sendOwner(chatId, tbot);
+      await sendOwner(chatId, tbot);
     }
   });
 
   tbot.on("callback_query", async (callbackQuery) => {
     const msg = callbackQuery.message;
+    if (!msg) return;
     const chatId = msg.chat.id;
     const data = callbackQuery.data;
 
     if (data === "menu") {
-      sendMenu(chatId, tbot);
+      await sendMenu(chatId, tbot);
     } else if (data === "owner") {
-      sendOwner(chatId, tbot);
+      await sendOwner(chatId, tbot);
     } else if (data === "help_pair") {
-      tbot.sendMessage(chatId, `📱 Send your number like this:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
+      await tbot.sendMessage(chatId, `📱 Send your number like this:\n\`/pair 923256326517\``, { parse_mode: "Markdown" });
     }
-    tbot.answerCallbackQuery(callbackQuery.id);
+    try {
+      await tbot.answerCallbackQuery(callbackQuery.id);
+    } catch (e) {}
   });
 
   return tbot;
 }
 
-function sendMenu(chatId, tbot) {
+async function sendMenu(chatId, tbot) {
   const lineMenu = 
     `╔═══════════════════════╗\n` +
     `║   🔥 *${config.BOT_NAME}* 🔥   ║\n` +
     `╚═══════════════════════╝\n\n` +
-    `📌 *Commands Menu (Line-by-Line):*\n` +
+    `📌 *Commands Menu:*\n` +
     `│ • adhan\n` +
     `│ • namaz_times\n` +
     `│ • tiktok\n` +
     `│ • play\n` +
     `│ • video\n` +
     `│ • chatgpt\n` +
-    `│ • gemini\n` +
-    `│ • weather\n\n` +
+    `│ • gemini\n\n` +
     `📌 *To pair WhatsApp, send:*\n` +
     `\`/pair your_number\``;
 
-  tbot.sendMessage(chatId, lineMenu, {
+  await tbot.sendMessage(chatId, lineMenu, {
     parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
@@ -212,6 +203,6 @@ function sendMenu(chatId, tbot) {
   });
 }
 
-function sendOwner(chatId, tbot) {
-  tbot.sendMessage(chatId, `👑 *Bot:* ${config.BOT_NAME}\n• *Owner:* ${config.OWNER_NAME}\n• *Dev:* ${config.DEVELOPER_NAME}`, { parse_mode: "Markdown" });
+async function sendOwner(chatId, tbot) {
+  await tbot.sendMessage(chatId, `👑 *Bot:* ${config.BOT_NAME}\n• *Owner:* ${config.OWNER_NAME}\n• *Dev:* ${config.DEVELOPER_NAME}`, { parse_mode: "Markdown" });
 }
