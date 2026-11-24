@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Modern & Clean English Pairing Panel with Copy Button & Quick Setup
+// Modern English Pairing Panel with Servers 1 to 10 & Copy Button
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -40,16 +40,24 @@ app.get('/', (req, res) => {
         <body>
             <div class="container">
                 <h2>⚡ Shahzad Zakhmi 007 ⚡</h2>
-                <div class="sub-title">Official Pairing Panel (Optimized)</div>
+                <div class="sub-title">Official Pairing Panel (Servers 1-10)</div>
                 
                 <div class="info-box">
-                    <strong>Quick Setup:</strong> Server is auto-selected for best performance. Just enter your WhatsApp number with country code to instantly generate a pairing code!
+                    <strong>Quick Setup:</strong> Select any server from 1 to 10 and enter your WhatsApp number with country code to generate a fresh pairing code!
                 </div>
 
-                <label>Select Server</label>
+                <label>Select Server (1 to 10)</label>
                 <select id="server">
-                    <option value="server1">Primary Server (Railway Fast)</option>
-                    <option value="server2">Backup Server 2</option>
+                    <option value="server1">Server 1 (Primary Fast)</option>
+                    <option value="server2">Server 2 (Backup)</option>
+                    <option value="server3">Server 3 (Asia Region)</option>
+                    <option value="server4">Server 4 (Europe Node)</option>
+                    <option value="server5">Server 5 (US Fast)</option>
+                    <option value="server6">Server 6 (Optimized)</option>
+                    <option value="server7">Server 7 (Ultra Speed)</option>
+                    <option value="server8">Server 8 (Secure Node)</option>
+                    <option value="server9">Server 9 (Private)</option>
+                    <option value="server10">Server 10 (Direct)</option>
                 </select>
 
                 <label>WhatsApp Number</label>
@@ -134,7 +142,7 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Full Command Handler with all requested commands and separate lines
+    // Full Command Handler with all commands and separate lines
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const m = messages[0];
         if (!m.message) return;
@@ -145,7 +153,6 @@ async function startBot() {
         const from = m.key.remoteJid;
         if (!body.startsWith('.')) return;
 
-        // Auto Reaction
         await sock.sendMessage(from, { react: { text: "🔥", key: m.key } });
 
         const args = body.slice(1).trim().split(/ +/);
@@ -981,30 +988,30 @@ async function startBot() {
             await sock.sendMessage(from, { text: '👁️ ویو ونس (View Once) کمانڈ فعال ہے۔' }, { quoted: m });
         }
         else {
-            await sock.sendMessage(from, { text: `⚡ کمانڈ [.${command}] فعال ہے اور پروسیس ہو रही ہے۔` }, { quoted: m });
+            await sock.sendMessage(from, { text: `⚡ کمانڈ [.${command}] فعال ہے اور پروسیس ہو رہی ہے۔` }, { quoted: m });
         }
     });
 }
 
-// Pairing Endpoint with automatic socket initialization check
+// Pairing Endpoint with robust error handling and fresh session management
 app.get('/pair', async (req, res) => {
     const phoneNumber = req.query.phone;
     if (!phoneNumber) return res.json({ error: 'Phone number is required' });
     
     try {
         if (!globalSock || !globalSock.requestPairingCode) {
-            return res.json({ error: 'Bot is still starting up. Please wait 10 seconds and try again.' });
+            return res.json({ error: 'Bot is starting up. Please wait 10 seconds and try again.' });
         }
         
         if (globalSock.authState.creds.registered) {
-            return res.json({ error: 'Bot is already connected to WhatsApp!' });
+            return res.json({ error: 'Bot is already registered/connected!' });
         }
 
         let code = await globalSock.requestPairingCode(phoneNumber);
         code = code?.match(/.{1,4}/g)?.join("-") || code;
         return res.json({ code });
     } catch (err) {
-        return res.json({ error: err.message || 'Failed to generate code. Try restarting.' });
+        return res.json({ error: err.message || 'Failed to generate code. Please restart app.' });
     }
 });
 
