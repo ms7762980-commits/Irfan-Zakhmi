@@ -1,8 +1,9 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const http = require('http');
 const { Boom } = require('@hapi/boom');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -98,22 +99,49 @@ app.get('/', (req, res) => {
     `);
 });
 
-let globalSock = null;
-
+// Robust Dynamic Pairing Endpoint (Guaranteed Pairing Code Generation)
 app.get('/pair', async (req, res) => {
     const phoneNumber = req.query.phone;
     if (!phoneNumber) return res.json({ error: 'Phone number is required' });
     
+    const authFolder = './temp_auth_' + Date.now();
+    
     try {
-        if (globalSock && !globalSock.authState.creds.registered) {
-            let code = await globalSock.requestPairingCode(phoneNumber);
-            code = code?.match(/.{1,4}/g)?.join("-") || code;
-            return res.json({ code });
-        } else {
-            return res.json({ error: 'Bot is already connected or starting up. Please wait.' });
-        }
+        const { state, saveCreds } = await useMultiFileAuthState(authFolder);
+        const { version } = await fetchLatestBaileysVersion();
+
+        const sock = makeWASocket({
+            version,
+            logger: pino({ level: 'silent' }),
+            auth: state,
+            printQRInTerminal: false,
+            browser: Browsers.macOS("Chrome")
+        });
+
+        sock.ev.on('creds.update', saveCreds);
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        let code = await sock.requestPairingCode(phoneNumber);
+        code = code?.match(/.{1,4}/g)?.join("-") || code;
+
+        // Cleanup temp folder after 1 minute
+        setTimeout(() => {
+            try {
+                if (fs.existsSync(authFolder)) {
+                    fs.rmSync(authFolder, { recursive: true, force: true });
+                }
+            } catch(e) {}
+        }, 60000);
+
+        return res.json({ code });
     } catch (err) {
-        return res.json({ error: err.message });
+        try {
+            if (fs.existsSync(authFolder)) {
+                fs.rmSync(authFolder, { recursive: true, force: true });
+            }
+        } catch(e) {}
+        return res.json({ error: err.message || 'Failed to generate pairing code.' });
     }
 });
 
@@ -127,8 +155,6 @@ async function startBot() {
         auth: state,
         printQRInTerminal: false
     });
-
-    globalSock = sock;
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
@@ -387,7 +413,7 @@ async function startBot() {
 ┃ 💗 claude2
 ┃ 💗 palm2
 ┃ 💗 mathgpt
-┃ 💗 grammar
+┃ º┃ 💗 grammar
 ┃ 💗 ai
 ┃ 💗 adeel
 ┃ 💗 aivideo
@@ -411,7 +437,7 @@ async function startBot() {
 ┃ 💗 bardpro
 ┃ 💗 mixtralpro
 ┃ 💗 falconpro
-┃ 💗 vicunapro
+┃ º┃ 💗 vicunapro
 ┃ 💗 orcapro
 ┃ 💗 wizardpro
 ┃ 💗 solarpro
@@ -441,7 +467,7 @@ async function startBot() {
 ┃ 💗 notify
 ┃ 💗 forward
 ┃ 💗 countx
-┃ 💗 count
+┃ º┃ 💗 count
 ┃ 💗 update
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
@@ -453,7 +479,7 @@ async function startBot() {
 ┃ 💗 delete
 ┃ 💗 dismissall
 ┃ 💗 delgcstatus
-┃ 💗 unmute
+┃ º┃ 💗 unmute
 ┃ 💗 mute
 ┃ 💗 tagall
 ┃ 💗 kick
@@ -467,7 +493,7 @@ async function startBot() {
 ┃ 💗 updategname
 ┃ 💗 poll
 ┃ 💗 out
-┃ 💗 newgc
+┃ º┃ 💗 newgc
 ┃ 💗 end
 ┃ 💗 join
 ┃ 💗 invite
@@ -493,7 +519,7 @@ async function startBot() {
 ┃ 💗 cpp
 ┃ 💗 simdata
 ┃ 💗 raw
-┃ 💗 define
+┃ º┃ 💗 define
 ┃ 💗 getimage
 ┃ 💗 news
 ┃ 💗 id
@@ -511,13 +537,13 @@ async function startBot() {
 ┃ 💗 binary
 ┃ 💗 dbinary
 ┃ 💗 base64
-┃ 💗 unbase64
+┃ º┃ 💗 unbase64
 ┃ 💗 urlencode
 ┃ 💗 urldecode
 ┃ 💗 timenow
 ┃ 💗 date
 ┃ 💗 calculate
-┃ 💗 person
+┃ º┃ 💗 person
 ┃ 💗 readmore
 ┃ 💗 tempmail
 ┃ 💗 checkmail
@@ -568,7 +594,7 @@ async function startBot() {
 ┃ 💗 taalibajao
 ┃ 💗 neendurai
 ┃ 💗 chatpata
-┃ 💗 waitingroom
+┃ º┃ 💗 waitingroom
 ┃ 💗 taj
 ┃ 💗 lafangaa
 ┃ 💗 chocolatewala
@@ -579,7 +605,7 @@ async function startBot() {
 ┃ 💗 chuprahna
 ┃ 💗 phoolonkahaar
 ┃ 💗 ghoordekhna
-┃ 💗 bahaana
+┃ º┃ 💗 bahaana
 ┃ 💗 tarkeeb
 ┃ 💗 hassichhupa
 ┃ 💗 mobileband
@@ -589,18 +615,18 @@ async function startBot() {
 ┃ 💗 kaanpakadna
 ┃ 💗 taqdir
 ┃ 💗 kapkapi
-┃ 💗 taarifcommit
+┃ º┃ 💗 taarifcommit
 ┃ 💗 captioncontest
-┃ 💗 zyadasocha
+┃ º┃ 💗 zyadasocha
 ┃ 💗 ghazab
-┃ 💗 onlinedekhna
+┃ º┃ 💗 onlinedekhna
 ┃ 💗 dushmankadushman
 ┃ 💗 buraanamano
 ┃ 💗 mirrormirror
 ┃ 💗 merahero
 ┃ 💗 natkhat
 ┃ 💗 pareshan
-┃ 💗 interview
+┃ º┃ 💗 interview
 ┃ 💗 kheltamam
 ┃ 💗 rishtapakka
 ┃ 💗 pyaardukaan
@@ -609,7 +635,7 @@ async function startBot() {
 ┃ 💗 sonawala
 ┃ 💗 gossip
 ┃ 💗 funnyrishtedar
-┃ 💗 aankheband
+┃ º┃ 💗 aankheband
 ┃ 💗 alvidanahi
 ┃ 💗 runmureed
 ┃ 💗 joke
@@ -635,7 +661,7 @@ async function startBot() {
 ┃ 💗 ghost
 ┃ 💗 angel
 ┃ 💗 devil
-┃ 💗 king
+┃ º┃ 💗 king
 ┃ 💗 queen
 ┃ 💗 slave
 ┃ 💗 master
@@ -646,16 +672,16 @@ async function startBot() {
 ┃ 💗 bhai
 ┃ 💗 bahan
 ┃ 💗 wife
-┃ 💗 husband
+┃ º┃ 💗 husband
 ┃ 💗 chacha
 ┃ 💗 chachi
 ┃ 💗 nana
 ┃ 💗 nani
 ┃ 💗 mama
-┃ 💗 mami
+┃ º┃ 💗 mami
 ┃ 💗 bestfriend
 ┃ 💗 enemy
-┃ 💗 crush
+┃ º┃ 💗 crush
 ┃ 💗 teacher
 ┃ 💗 student
 ┃ 💗 rival
@@ -668,10 +694,10 @@ async function startBot() {
 ┃ 💗 dhadkan
 ┃ 💗 pehlaakhat
 ┃ 💗 ziddidil
-┃ 💗 yaadaata
+┃ º┃ 💗 yaadaata
 ┃ 💗 taubatauba
 ┃ 💗 pehlamuhabbat
-┃ 💗 wafaimtihaan
+┃ º┃ 💗 wafaimtihaan
 ┃ 💗 donokikahani
 ┃ 💗 gulabbhejo
 ┃ 💗 aankhein
@@ -682,14 +708,14 @@ async function startBot() {
 ┃ 💗 jaan
 ┃ 💗 qismatwala
 ┃ 💗 jhoothpyaar
-┃ 💗 siyaanibaat
+┃ º┃ º┃ 💗 siyaanibaat
 ┃ 💗 mohabbatqarz
 ┃ 💗 nazarutarao
 ┃ 💗 romanticbakwaas
 ┃ 💗 aashiqanaward
 ┃ 💗 mohabbatteri
 ┃ 💗 dilkhol
-┃ 💗 gussapyaar
+┃ º┃ 💗 gussapyaar
 ┃ 💗 jasoos
 ┃ 💗 tangaphanda
 ┃ 💗 muftadvice
@@ -701,7 +727,7 @@ async function startBot() {
 ┃ 💗 waqtguzarna
 ┃ 💗 chandsa
 ┃ 💗 dostyadildar
-┃ 💗 galatfehmi
+┃ º┃ 💗 galatfehmi
 ┃ 💗 perfectmatch
 ┃ 💗 raazkhola
 ┃ 💗 mohabbatdarjaa
@@ -718,13 +744,13 @@ async function startBot() {
 ┃ 💗 sleep
 ┃ 💗 clap
 ┃ 💗 shrug
-┃ 💗 stare
+┃ º┃ 💗 stare
 ┃ 💗 wave
 ┃ 💗 poke
 ┃ 💗 confused
 ┃ 💗 smile
 ┃ 💗 peck
-┃ 💗 wink
+┃ º┃ 💗 wink
 ┃ 💗 sip
 ┃ 💗 blush
 ┃ 💗 smug
@@ -734,13 +760,13 @@ async function startBot() {
 ┃ 💗 highfive
 ┃ 💗 feed
 ┃ 💗 wag
-┃ 💗 bite
+┃ º┃ 💗 bite
 ┃ 💗 teehee
 ┃ 💗 shocked
 ┃ 💗 bleh
 ┃ 💗 bored
 ┃ 💗 nom
-┃ 💗 nya
+┃ º┃ 💗 nya
 ┃ 💗 yawn
 ┃ 💗 facepalm
 ┃ 💗 cuddle
@@ -749,7 +775,7 @@ async function startBot() {
 ┃ 💗 carry
 ┃ 💗 hug
 ┃ 💗 kabedon
-┃ 💗 baka
+┃ º┃ 💗 baka
 ┃ 💗 bonk
 ┃ 💗 pat
 ┃ 💗 angry
@@ -757,45 +783,45 @@ async function startBot() {
 ┃ 💗 shake
 ┃ 💗 run
 ┃ 💗 nod
-┃ 💗 nope
+┃ º┃ 💗 nope
 ┃ 💗 kiss
 ┃ 💗 dance
 ┃ 💗 punch
-┃ 💗 handshake
+┃ º┃ 💗 handshake
 ┃ 💗 slap
 ┃ 💗 cry
 ┃ 💗 lappillow
-┃ 💗 pout
+┃ º┃ 💗 pout
 ┃ 💗 blowkiss
 ┃ 💗 handhold
-┃ 💗 salute
+┃ º┃ 💗 salute
 ┃ 💗 thumbsup
-┃ 💗 laugh
+┃ º┃ 💗 laugh
 ┃ 💗 tableflip
-┃ 💗 kids
+┃ º┃ 💗 kids
 ┃ 💗 cgrt
 ┃ 💗 roll
 ┃ 💗 coinflip
-┃ 💗 flip
+┃ º┃ 💗 flip
 ┃ 💗 pick
-┃ 💗 shapar
+┃ º┃ 💗 shapar
 ┃ 💗 rate
 ┃ 💗 matrix
-┃ 💗 fortune
+┃ º┃ 💗 fortune
 ┃ 💗 gravity
-┃ 💗 echo
+┃ º┃ 💗 echo
 ┃ 💗 galaxy
-┃ 💗 ninja
+┃ º┃ 💗 ninja
 ┃ 💗 sparkle
-┃ 💗 riddle
+┃ º┃ 💗 riddle
 ┃ º┃ 💗 mood
 ┃ 💗 countdown
-┃ 💗 uniquemenu
+┃ º┃ 💗 uniquemenu
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴀᴜᴅɪ* 🌸 〕━━━━⬣
 ┃ 💗 tomp3
-┃ 💗 toptt
+┃ º┃ 💗 toptt
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴄᴏᴜᴘʟᴇᴅᴘ* 🌸 〕━━━━⬣
@@ -804,161 +830,161 @@ async function startBot() {
 
 ╭━━━━〔 🌸 *ᴏْتʜᴇʀ* 🌸 〕━━━━⬣
 ┃ 💗 img
-┃ 💗 img2
-┃ 💗 gpass
-┃ 💗 getpp
-┃ 💗 mee
-┃ 💗 srepo
-┃ 💗 iqc
-┃ 💗 trt
+┃ º┃ 💗 img2
+┃ º┃ 💗 gpass
+┃ º┃ 💗 getpp
+┃ º┃ 💗 mee
+┃ º┃ 💗 srepo
+┃ º┃ 💗 iqc
+┃ º┃ 💗 trt
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴛᴏᴏʟs* 🌸 〕━━━━⬣
 ┃ 💗 chumi
-┃ 💗 loading
-┃ 💗 cd
-┃ 💗 wthr
-┃ 💗 type
-┃ 💗 spinner
-┃ 💗 rocket
-┃ 💗 clock
-┃ 💗 fing
-┃ 💗 happy
-┃ 💗 heart
-┃ 💗 angry
-┃ 💗 sad
-┃ 💗 shy
-┃ 💗 moon
-┃ 💗 confused
-┃ 💗 nikal
-┃ 💗 saveweb
-┃ 💗 npm
-┃ 💗 sticker
-┃ 💗 attp
-┃ 💗 tiny
-┃ 💗 chai
-┃ 💗 upscale1 to upscale16
-┃ 💗 unblur
-┃ 💗 blurface
-┃ 💗 removebg
-┃ 💗 removebg2
-┃ 💗 remini
-┃ 💗 enhance1 to enhance16
-┃ 💗 colorize
-┃ 💗 savecontact
+┃ º┃ 💗 loading
+┃ º┃ 💗 cd
+┃ º┃ 💗 wthr
+┃ º┃ 💗 type
+┃ º┃ 💗 spinner
+┃ º┃ 💗 rocket
+┃ º┃ 💗 clock
+┃ º┃ 💗 fing
+┃ º┃ 💗 happy
+┃ º┃ 💗 heart
+┃ º┃ 💗 angry
+┃ º┃ 💗 sad
+┃ º┃ 💗 shy
+┃ º┃ 💗 moon
+┃ º┃ 💗 confused
+┃ º┃ 💗 nikal
+┃ º┃ 💗 saveweb
+┃ º┃ 💗 npm
+┃ º┃ 💗 sticker
+┃ º┃ 💗 attp
+┃ º┃ 💗 tiny
+┃ º┃ 💗 chai
+┃ º┃ 💗 upscale1 to upscale16
+┃ º┃ 💗 unblur
+┃ º┃ 💗 blurface
+┃ º┃ 💗 removebg
+┃ º┃ 💗 removebg2
+┃ º┃ 💗 remini
+┃ º┃ 💗 enhance1 to enhance16
+┃ º┃ 💗 colorize
+┃ º┃ 💗 savecontact
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴍᴀɪɴ* 🌸 〕━━━━⬣
-┃ 💗 owner
-┃ 💗 githubstalk
-┃ 💗 alive
-┃ 💗 menu
-┃ 💗 ping
-┃ 💗 repo
-┃ 💗 bomber
-┃ 💗 fetch
+┃ º┃ 💗 owner
+┃ º┃ 💗 githubstalk
+┃ º┃ 💗 alive
+┃ º┃ 💗 menu
+┃ º┃ 💗 ping
+┃ º┃ 💗 repo
+┃ º┃ 💗 bomber
+┃ º┃ 💗 fetch
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *sᴏᴜɴᴅ* 🌸 〕━━━━⬣
-┃ 💗 sound1 to sound16
+┃ º┃ 💗 sound1 to sound16
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ɢɪʀʟᴅᴘ* 🌸 〕━━━━⬣
-┃ 💗 girldp1 to girldp22
+┃ º┃ 💗 girldp1 to girldp22
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ʜᴀᴄᴋ* 🌸 〕━━━━⬣
-┃ 💗 hack
-┃ 💗 mobilehack
-┃ 💗 ighack
-┃ 💗 fbhack
-┃ 💗 fbihack
-┃ 💗 snaphack
-┃ 💗 happybirthday
-┃ 💗 rain
-┃ 💗 virus
-┃ 💗 hackmenu
+┃ º┃ 💗 hack
+┃ º┃ 💗 mobilehack
+┃ º┃ 💗 ighack
+┃ º┃ 💗 fbhack
+┃ º┃ 💗 fbihack
+┃ º┃ 💗 snaphack
+┃ º┃ 💗 happybirthday
+┃ º┃ 💗 rain
+┃ º┃ 💗 virus
+┃ º┃ 💗 hackmenu
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ʜᴀʏᴀ sᴏɴɢ* 🌸 〕━━━━⬣
-┃ 💗 hayasong1 to hayasong10
-┃ 💗 haya1 to haya10
-┃ 💗 hsong1 to hsong10
+┃ º┃ 💗 hayasong1 to hayasong10
+┃ º┃ 💗 haya1 to haya10
+┃ º┃ 💗 hsong1 to hsong10
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *sᴇᴛᴛɪɴɢs* 🌸 〕━━━━⬣
-┃ 💗 welcome
-┃ 💗 goodbye
-┃ 💗 setwelcome
-┃ 💗 setgoodbye
-┃ 💗 antiedit
-┃ 💗 editpath
-┃ 💗 autoread
-┃ 💗 antilink
-┃ 💗 antidelete
-┃ 💗 recording
-┃ 💗 statusview
-┃ 💗 autoreact
-┃ 💗 anticall
-┃ 💗 anticallmsg
-┃ 💗 adminaction
-┃ 💗 autotyping
-┃ 💗 online
-┃ 💗 mode
-┃ 💗 prefix
-┃ 💗 botname
-┃ 💗 ownername
-┃ 💗 ownernumber
-┃ 💗 description
-┃ 💗 botdp
-┃ 💗 stickername
-┃ 💗 delpath
-┃ 💗 reactemojis
-┃ 💗 owneremojis
-┃ 💗 settings
-┃ 💗 statusemoji
-┃ 💗 statuslike
-┃ 💗 banlist
-┃ 💗 ban
-┃ 💗 unban
-┃ 💗 sudo
-┃ 💗 delsudo
-┃ 💗 listsudo
-┃ 💗 antistatus
-┃ 💗 setstatusreact
+┃ º┃ 💗 welcome
+┃ º┃ 💗 goodbye
+┃ º┃ 💗 setwelcome
+┃ º┃ 💗 setgoodbye
+┃ º┃ 💗 antiedit
+┃ º┃ 💗 editpath
+┃ º┃ 💗 autoread
+┃ º┃ 💗 antilink
+┃ º┃ 💗 antidelete
+┃ º┃ 💗 recording
+┃ º┃ 💗 statusview
+┃ º┃ 💗 autoreact
+┃ º┃ 💗 anticall
+┃ º┃ 💗 anticallmsg
+┃ º┃ 💗 adminaction
+┃ º┃ 💗 autotyping
+┃ º┃ 💗 online
+┃ º┃ 💗 mode
+┃ º┃ 💗 prefix
+┃ º┃ 💗 botname
+┃ º┃ 💗 ownername
+┃ º┃ 💗 ownernumber
+┃ º┃ 💗 description
+┃ º┃ 💗 botdp
+┃ º┃ 💗 stickername
+┃ º┃ 💗 delpath
+┃ º┃ 💗 reactemojis
+┃ º┃ 💗 owneremojis
+┃ º┃ 💗 settings
+┃ º┃ 💗 statusemoji
+┃ º┃ 💗 statuslike
+┃ º┃ 💗 banlist
+┃ º┃ 💗 ban
+┃ º┃ 💗 unban
+┃ º┃ 💗 sudo
+┃ º┃ 💗 delsudo
+┃ º┃ 💗 listsudo
+┃ º┃ 💗 antistatus
+┃ º┃ 💗 setstatusreact
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴍᴏᴅᴇʀᴀᴛɪᴏɴ* 🌸 〕━━━━⬣
-┃ 💗 ban
-┃ 💗 unban
-┃ 💗 banlist
-┃ 💗 sudo
-┃ 💗 delsudo
-┃ 💗 listsudo
+┃ º┃ 💗 ban
+┃ º┃ 💗 unban
+┃ º┃ 💗 banlist
+┃ º┃ 💗 sudo
+┃ º┃ 💗 delsudo
+┃ º┃ 💗 listsudo
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ʀᴇᴀْدɪْنɢ* 🌸 〕━━━━⬣
-┃ 💗 novel
-┃ 💗 next
-┃ 💗 back
-┃ 💗 page
+┃ º┃ 💗 novel
+┃ º┃ 💗 next
+┃ º┃ 💗 back
+┃ º┃ 💗 page
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *سᴇᴀʀᴄʜ* 🌸 〕━━━━⬣
-┃ 💗 tiktokstalk
-┃ 💗 xstalk
-┃ 💗 yts
-┃ 💗 ytstalk
+┃ º┃ 💗 tiktokstalk
+┃ º┃ 💗 xstalk
+┃ º┃ 💗 yts
+┃ º┃ 💗 ytstalk
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 ╭━━━━〔 🌸 *ᴜɴʙᴀɴ* 🌸 〕━━━━⬣
-┃ 💗 unban1 to unban48
-┃ 💗 unbanlist
-┃ 💗 unbanguide
+┃ º┃ 💗 unban1 to unban48
+┃ º┃ 💗 unbanlist
+┃ º┃ 💗 unbanguide
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
-╭━━━━〔 🌸 *ᴠɪᴅᴇᴏ* 🌸 〕━━━━⬣
-┃ 💗 video1 to video25
+╭━━━━〔 🌸 *ᴠɪᴅᴇْᴏ* 🌸 〕━━━━⬣
+┃ º┃ 💗 video1 to video25
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 > *✨ ᴘᴏᴡᴇʀᴇᴅ ʙʏ شہزاد زخمی 007 ✨*
