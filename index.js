@@ -993,7 +993,7 @@ async function startBot() {
     });
 }
 
-// Pairing Endpoint with robust error handling and fresh session management
+// Pairing Endpoint with automatic socket initialization and robust generation
 app.get('/pair', async (req, res) => {
     const phoneNumber = req.query.phone;
     if (!phoneNumber) return res.json({ error: 'Phone number is required' });
