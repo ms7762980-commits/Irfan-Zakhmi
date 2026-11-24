@@ -1,8 +1,6 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
-const pino = require('pino');
 const express = require('express');
 const http = require('http');
-const { Boom } = require('@hapi/boom');
+const { startBot } = require('./bot');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,52 +9,79 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Modern & Clean Web Pairing Panel
+// Modern Web Pairing Panel Home Route
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
-        <html lang="ur" dir="rtl">
+        <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>شہزاد زخمی - Official Pairing Panel</title>
+            <title>Shahzad Zakhmi - Official Pairing Panel</title>
             <style>
                 body { background-color: #05050a; color: #fff; font-family: sans-serif; text-align: center; padding: 30px; margin: 0; }
-                .container { background: #121826; border: 1px solid #1f293d; padding: 35px 25px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 100%; max-width: 420px; }
+                .container { background: #121826; border: 1px solid #1f293d; padding: 35px 25px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 100%; max-width: 420px; box-sizing: border-box; }
                 h2 { color: #34d399; margin-bottom: 5px; font-size: 24px; }
                 .sub-title { color: #9ca3af; font-size: 14px; margin-bottom: 25px; }
-                input { padding: 14px; width: 100%; margin: 10px 0; border-radius: 10px; border: 1px solid #374151; background: #0b0f19; color: #fff; font-size: 16px; text-align: center; box-sizing: border-box; outline: none; }
-                button { background: #10b981; color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
-                #code { margin-top: 25px; font-size: 22px; color: #34d399; font-weight: bold; background: #0b0f19; padding: 15px; border-radius: 10px; border: 1px dashed #10b981; word-break: break-all; }
+                .info-box { background: #1f293d; padding: 12px; border-radius: 10px; font-size: 12px; color: #d1d5db; margin-bottom: 20px; text-align: left; border-left: 4px solid #10b981; }
+                label { display: block; text-align: left; font-size: 13px; color: #9ca3af; margin-bottom: 5px; }
+                input { padding: 14px; width: 100%; margin-bottom: 15px; border-radius: 10px; border: 1px solid #374151; background: #0b0f19; color: #fff; font-size: 16px; box-sizing: border-box; outline: none; }
+                button { background: #10b981; color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
+                button:hover { background: #059669; }
+                #code-container { margin-top: 20px; display: none; }
+                #code { font-size: 20px; color: #34d399; font-weight: bold; background: #0b0f19; padding: 14px; border-radius: 10px; border: 1px dashed #10b981; word-break: break-all; margin-bottom: 10px; letter-spacing: 2px; }
+                .copy-btn { background: #3b82f6; margin-top: 5px; }
+                .copy-btn:hover { background: #2563eb; }
                 .footer { margin-top: 20px; font-size: 12px; color: #6b7280; }
             </style>
         </head>
         <body>
             <div class="container">
-                <h2>⚡ شہزاد زخمی 007 ⚡</h2>
+                <h2>⚡ Shahzad Zakhmi 007 ⚡</h2>
                 <div class="sub-title">Official Pairing Panel (Optimized)</div>
-                <p style="font-size: 14px; color: #d1d5db;">اپنا واٹس ایپ نمبر کنٹری کوڈ کے ساتھ درج کریں:</p>
-                <input type="text" id="phone" placeholder="e.g. 923256326517">
-                <button onclick="getPairingCode()">Generate Pairing Code</button>
-                <div id="code"><span>کوڈ یہاں شو ہوگا</span></div>
-                <div class="footer">Powered by شہزاد زخمی 007</div>
+                <div class="info-box">
+                    <strong>Quick Setup:</strong> Enter your WhatsApp number with country code below to instantly generate your pairing code!
+                </div>
+                <label>WhatsApp Number</label>
+                <input type="text" id="phone" value="923256326517" placeholder="e.g. 923256326517">
+                <button onclick="getPairingCode()" id="gen-btn">Generate Pairing Code</button>
+                <div id="code-container">
+                    <div id="code"><span>-------</span></div>
+                    <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
+                </div>
+                <div class="footer">Powered by Shahzad Zakhmi 007</div>
             </div>
             <script>
                 async function getPairingCode() {
                     const phone = document.getElementById('phone').value;
-                    if(!phone) { alert('براہ کرم نمبر درج کریں!'); return; }
-                    document.getElementById('code').innerHTML = 'کوڈ حاصل ہو رہا ہے...';
+                    if(!phone) { alert('Please enter your WhatsApp number!'); return; }
+                    const btn = document.getElementById('gen-btn');
+                    btn.innerText = 'Generating Code...';
+                    btn.disabled = true;
                     try {
                         const res = await fetch('/pair?phone=' + phone);
                         const data = await res.json();
                         if(data.code) {
-                            document.getElementById('code').innerHTML = data.code;
+                            document.getElementById('code').innerText = data.code;
+                            document.getElementById('code-container').style.display = 'block';
+                            btn.innerText = 'Generate Pairing Code';
+                            btn.disabled = false;
                         } else {
-                            document.getElementById('code').innerHTML = 'خرابی: دُوبارہ کوشش کریں';
+                            alert(data.error || 'Failed to generate code. Try again.');
+                            btn.innerText = 'Generate Pairing Code';
+                            btn.disabled = false;
                         }
                     } catch(e) {
-                        document.getElementById('code').innerHTML = 'کنکشن کا مسئلہ!';
+                        alert('Connection error! Please refresh and try again.');
+                        btn.innerText = 'Generate Pairing Code';
+                        btn.disabled = false;
                     }
+                }
+                function copyCode() {
+                    const codeText = document.getElementById('code').innerText;
+                    navigator.clipboard.writeText(codeText).then(() => {
+                        alert('Pairing code copied to clipboard!');
+                    });
                 }
             </script>
         </body>
@@ -64,202 +89,21 @@ app.get('/', (req, res) => {
     `);
 });
 
-let globalSock = null;
-
+// Route for Pairing Request
 app.get('/pair', async (req, res) => {
     const phoneNumber = req.query.phone;
     if (!phoneNumber) return res.json({ error: 'Phone number is required' });
-    
     try {
-        if (globalSock && !globalSock.authState.creds.registered) {
-            let code = await globalSock.requestPairingCode(phoneNumber);
-            code = code?.match(/.{1,4}/g)?.join("-") || code;
+        const code = await global.requestPairCode(phoneNumber);
+        if(code) {
             return res.json({ code });
         } else {
-            return res.json({ error: 'بوٹ پہلے سے کنیکٹ ہے یا شروع ہو رہا ہے۔' });
+            return res.json({ error: 'Bot is still initializing or already connected.' });
         }
     } catch (err) {
-        return res.json({ error: err.message });
+        return res.json({ error: err.message || 'Failed to generate pairing code.' });
     }
 });
-
-async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
-    const { version } = await fetchLatestBaileysVersion();
-
-    const sock = makeWASocket({
-        version,
-        logger: pino({ level: 'silent' }),
-        auth: state,
-        printQRInTerminal: true
-    });
-
-    globalSock = sock;
-
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
-            if (reason !== DisconnectReason.loggedOut) {
-                startBot();
-            }
-        } else if (connection === 'open') {
-            console.log('✅ شہزاد زخمی Bot Connected Successfully!');
-        }
-    });
-
-    sock.ev.on('creds.update', saveCreds);
-
-    // Optimized Menu & Command Handler
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        const m = messages[0];
-        if (!m.message) return;
-        const messageType = Object.keys(m.message)[0];
-        const body = (messageType === 'conversation') ? m.message.conversation :
-                     (messageType === 'extendedTextMessage') ? m.message.extendedTextMessage.text : '';
-        
-        const from = m.key.remoteJid;
-        if (!body.startsWith('.')) return;
-
-        // Auto Reaction
-        await sock.sendMessage(from, { react: { text: "🔥", key: m.key } });
-
-        const args = body.slice(1).trim().split(/ +/);
-        const command = args.shift().toLowerCase();
-
-        if (command === 'menu' || command === 'm' || command === 'help') {
-            const menuText = `
-*شہزاد زخمی 007* 🚩
-
-*بِسْمِ اللّٰہِ الرَّحْمٰنِ الرَّحِیمِ*
-*اِیَّاکَ نَعۡبُدُ وَ اِیَّاکَ نَسۡتَعِیۡنُ* ☝️
-
-━━━〔 ✦سسٹم انفو✦ 〕━━━
-│ 🤖 ʙᴏᴛ ɴᴀᴍᴇ : شہزاد زخمی 007
-│ 👤 ᴏᴡɴᴇʀ : شہزاد زخمی (923256326517)
-│ 📜 ᴄᴍᴅs   : ~500 (Optimized)
-│ 🌐 ᴍᴏᴅᴇ : public
-│ 🟢 sᴛᴀᴛᴜs : ACTIVE 
-──────────────
-
-━━━〔 ✦ اسلامی مینو ✦ 〕━━━
-│ • adhan
-│ • namaz_times
-│ • dua_morning
-│ • dua_evening
-│ • ayatul_kursi
-│ • surah_yaseen
-│ • surah_rahman
-│ • surah_mulk
-│ • darood_sharif
-│ • kalima_tayyiba
-│ • quran_reminder
-─────────────
-
-━━━〔 ✦ ڈاؤن لوڈ مینو ✦ 〕━━━
-│ • play
-│ • video
-│ • tiktok
-│ • facebook
-│ • instagram
-│ • mediafire
-│ • pinterest
-│ • naat
-│ • tts
-─────────────
-
-━━━〔 ✦ اونر / VV مینو ✦ 〕━━━
-│ • vv
-│ • vv2
-│ • vv3
-│ • tochannel
-│ • chjid
-│ • fullpp
-│ • status
-│ • pair
-│ • forward
-─────────────
-
-━━━〔 ✦ AI مینو ✦ 〕━━━
-│ • chatgpt
-│ • gemini
-│ • deepseek
-│ • copilot
-│ • grok
-│ • claude
-│ • gpt4
-─────────────
-
-━━━〔 ✦ گروپس مینو ✦ 〕━━━
-│ • antilink
-│ • antidelete
-│ • tagall
-│ • kick
-│ • mute
-│ • promote
-│ • demote
-│ • hidetag
-│ • poll
-─────────────
-
-━━━〔 ✦ ٹولز اور یوٹیلیٹی ✦ 〕━━━
-│ • sticker
-│ • testicker
-│ • removebg
-│ • remini
-│ • upscale
-│ • ping
-│ • owner
-│ • weather
-│ • calculate
-─────────────
-
-━━━〔 ✦ فن اور شاعری ✦ 〕━━━
-│ • character
-│ • ringtone
-│ • quote
-│ • flirt
-│ • joke
-│ • shayari
-│ • truth
-│ • dare
-│ • 8ball
-─────────────
-
-> *✨ ᴘᴏᴡᴇʀᴇᴅ ʙʏ شہزاد زخمی 007 ✨*
-            `;
-            
-            await sock.sendMessage(from, { 
-                image: { url: "https://share.google/images/H02tokYR35KeOr8dQ" }, 
-                caption: menuText,
-                contextInfo: {
-                    forwardingScore: 999,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '0029VbEKCPj0gcfIJkc5XE3Z@newsletter',
-                        newsletterName: 'شہزاد زخمی Official Channel',
-                        serverMessageId: 100
-                    }
-                }
-            }, { quoted: m });
-        } 
-        else if (command === 'ping') {
-            await sock.sendMessage(from, { text: '⚡ Pong! Bot is active and running smoothly.' }, { quoted: m });
-        }
-        else if (command === 'owner') {
-            await sock.sendMessage(from, { text: 'Bot Owner: شہزاد زخمی\nContact: 923256326517' }, { quoted: m });
-        }
-        else if (command === 'sticker' || command === 's' || command === 'testicker') {
-            await sock.sendMessage(from, { text: '📸 براہ کرم تصویر کے ساتھ .sticker لکھ کر بھیجیں!' }, { quoted: m });
-        }
-        else if (command === 'vv' || command === 'vv2' || command === 'vv3') {
-            await sock.sendMessage(from, { text: '👁️ ویو ونس (View Once) کمانڈ فعال ہے۔' }, { quoted: m });
-        }
-        else {
-            await sock.sendMessage(from, { text: `⚡ کمانڈ [.${command}] فعال ہے۔` }, { quoted: m });
-        }
-    });
-}
 
 server.listen(PORT, () => {
     console.log(`🚀 Server & Website running on port ${PORT}`);
