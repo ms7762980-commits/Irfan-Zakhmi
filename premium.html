@@ -1,0 +1,873 @@
+<!DOCTYPE html><html lang="ht"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080a12">
+<title>Premium | DIANA MINI BOT</title>
+<link rel="stylesheet" href="ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="_assets/fonts.googleapis.com_css2.bin" rel="stylesheet">
+<style>
+:root{
+  --bg:#1b1b1c;--card:#202021;--tile:#1d1d1e;
+  --text:#f2f4f8;--muted:#8793a8;--label:#8b97ad;
+  --blue:#3b82f6;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+  --lift:10px 10px 22px rgba(0,0,0,.55),-6px -6px 16px rgba(255,255,255,.025);
+  --dent:inset 5px 5px 12px rgba(0,0,0,.55),inset -4px -4px 10px rgba(255,255,255,.03);
+  --font:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:var(--font);
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+button,input{font:inherit;color:inherit}
+.wrap{max-width:560px;margin:0 auto}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.back{width:46px;height:46px;display:grid;place-items:center;border-radius:16px;color:var(--label);text-decoration:none;background:var(--card);box-shadow:var(--lift)}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--tile);box-shadow:var(--dent);
+  font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.dot.off{background:var(--red);box-shadow:0 0 10px var(--red)}
+
+/* cards */
+.card{margin-bottom:18px;padding:26px 22px;border-radius:30px;background:var(--card);box-shadow:var(--lift)}
+.title{margin:0 0 6px;font-size:1rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--label);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.title span{display:flex;align-items:center;gap:10px}
+.title i{color:var(--blue)}
+.desc{margin:0 0 18px;color:var(--muted);font-size:.95rem;line-height:1.6}
+
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{padding:16px 4px 14px;text-align:center;border-radius:20px;background:var(--tile);box-shadow:var(--dent)}
+.stat b{display:block;font-size:1.45rem;font-weight:700}
+.stat span{display:block;margin-top:6px;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
+.c-white{color:#fff}.c-green{color:var(--green)}.c-red{color:var(--red)}.c-blue{color:var(--blue)}.c-amber{color:var(--amber)}
+
+/* inputs */
+.field{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 18px;margin-bottom:14px;border-radius:18px;background:var(--tile);box-shadow:var(--dent)}
+.field:focus-within{box-shadow:var(--dent),0 0 0 2px rgba(59,130,246,.55)}
+.field i{color:var(--blue)}
+.field input{flex:1;min-width:0;height:54px;border:0;outline:0;background:transparent;font-size:1.02rem}
+.field input::placeholder{color:#5b6579}
+.lbl{margin:2px 4px 10px;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+
+/* plans */
+.plans{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.plans button{padding:12px 2px;border:0;border-radius:16px;cursor:pointer;background:var(--card);box-shadow:5px 5px 11px rgba(0,0,0,.5),-3px -3px 8px rgba(255,255,255,.025);
+  color:var(--muted);font-weight:700;font-size:.9rem;line-height:1.25;transition:box-shadow .2s,color .2s}
+.plans button small{display:block;margin-top:2px;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.plans button.on{color:var(--blue);background:var(--tile);box-shadow:var(--dent)}
+
+/* buttons */
+.btn{width:100%;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:18px;cursor:pointer;
+  background:var(--card);box-shadow:var(--lift);font-weight:700;font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);transition:box-shadow .15s}
+.btn:active{box-shadow:var(--dent)}
+.btn.green{color:var(--green)}.btn.amber{color:var(--amber)}
+.btn:disabled{opacity:.55}
+.err{display:none;margin-top:14px;padding:13px 16px;border-radius:16px;background:var(--tile);box-shadow:var(--dent);color:#fca5a5;font-size:.88rem}
+
+/* rows */
+.row{display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:12px;border-radius:22px;background:var(--tile);box-shadow:var(--dent)}
+.row .ic{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--card);box-shadow:4px 4px 9px rgba(0,0,0,.5),-2px -2px 6px rgba(255,255,255,.03);color:var(--blue)}
+.row .ic.on{color:var(--green)}.row .ic.off{color:#586174}.row .ic.gold{color:var(--amber)}
+.row .inf{flex:1;min-width:0}
+.row .num{display:flex;align-items:center;gap:7px;font-size:1rem;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.row .sub{margin-top:5px;font-size:.76rem;color:var(--muted)}
+.row .sub .ok{color:var(--green);font-weight:700}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{padding:4px 9px;border-radius:999px;background:var(--card);box-shadow:3px 3px 7px rgba(0,0,0,.45);font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
+.tag.blue{color:var(--blue)}.tag.green{color:var(--green)}.tag.amber{color:var(--amber)}
+.acts{display:flex;gap:8px;flex:none}
+.sq{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:14px;cursor:pointer;background:var(--card);box-shadow:4px 4px 9px rgba(0,0,0,.5),-2px -2px 6px rgba(255,255,255,.03);color:var(--muted)}
+.sq:active{box-shadow:var(--dent)}
+.sq.v{color:var(--blue)}.sq.a{color:var(--amber)}.sq.del{color:var(--red)}
+.vb{width:1.1em;height:1.1em;flex:none;filter:drop-shadow(0 0 5px rgba(0,149,246,.6))}
+.empty{padding:26px 16px;text-align:center;border-radius:20px;background:var(--tile);box-shadow:var(--dent);color:var(--muted);font-size:.88rem}
+
+/* status line like LOCAL NODE / HEALTHY */
+.node{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;margin-bottom:14px;border-radius:20px;background:var(--tile);box-shadow:var(--dent);
+  font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+.node span{display:flex;align-items:center;gap:12px}
+.node em{font-style:normal;color:var(--green)}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);padding:14px 22px;border-radius:999px;background:var(--card);box-shadow:var(--lift);font-size:.86rem;font-weight:700;z-index:9}
+.hide{display:none!important}
+@media(max-width:380px){.stats{grid-template-columns:repeat(2,1fr)}.plans button{font-size:.8rem}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== polish v2 ===== */
+.card{position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:22px;right:22px;top:0;height:2px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.8),transparent);opacity:.7}
+.title>span>i,.title>span>.vb{flex:none}
+.title>span>i{width:34px;height:34px;display:inline-grid;place-items:center;border-radius:12px;background:var(--tile);box-shadow:var(--dent);font-size:.85rem}
+.btn:active{transform:scale(.985)}
+.stat{position:relative;padding-top:20px}
+.stat>i.ic2{position:absolute;left:50%;top:-12px;transform:translateX(-50%);width:26px;height:26px;display:grid;place-items:center;border-radius:9px;background:var(--card);box-shadow:var(--sm);font-size:.68rem;color:var(--blue)}
+.stats{margin-top:12px}
+.plans button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .2s}
+.plans button.on{box-shadow:var(--dent),0 0 16px rgba(59,130,246,.28)}
+.tag{display:inline-flex;align-items:center;gap:6px}
+.tag i{color:var(--blue);font-size:.62rem}
+.tag b{color:var(--text);font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:700}
+.tag.amber i{color:var(--amber)}
+.tag.green i{color:var(--green)}
+.row{transition:transform .15s}
+.row:active{transform:scale(.99)}
+.sechint{display:flex;align-items:center;gap:8px;margin:-6px 4px 16px;font-size:.74rem;color:var(--label)}
+.sechint i{color:var(--blue)}
+
+/* =====================================================================
+   THEME v3 - same prettier glass look as index.html (styling only)
+   ===================================================================== */
+:root{
+  --bg:#080a12;--card:rgba(255,255,255,.05);--tile:rgba(255,255,255,.04);
+  --text:#f4f6fb;--muted:#9aa5bd;--label:#a3aec6;
+  --blue:#6d8dff;--ac-rgb:109,141,255;--ac2:#b06bff;--ac2-rgb:176,107,255;
+  --green:#34d399;--red:#fb7185;--amber:#fbbf24;
+  --line:rgba(255,255,255,.09);
+  --grad:linear-gradient(135deg,#5b8cff 0%,#8b6bff 55%,#c06bff 100%);
+  --lift:0 14px 36px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px var(--line);
+  --dent:inset 0 2px 8px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);
+  --sm:0 6px 16px rgba(0,0,0,.32),0 0 0 1px rgba(255,255,255,.07);
+}
+html{background:var(--bg)}
+body{background:transparent;position:relative}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(60% 45% at 12% -5%,rgba(91,140,255,.26),transparent 70%),
+    radial-gradient(50% 40% at 105% 18%,rgba(176,107,255,.20),transparent 70%),
+    radial-gradient(70% 50% at 50% 112%,rgba(251,191,36,.10),transparent 70%),
+    var(--bg)}
+::selection{background:rgba(var(--ac-rgb),.35)}
+
+.card{border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));
+  -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%)}
+.card::before{height:2px;left:18px;right:18px;opacity:1;
+  background:linear-gradient(90deg,transparent,rgba(var(--ac-rgb),.95),rgba(var(--ac2-rgb),.95),transparent)}
+.title{color:var(--text);letter-spacing:.14em}
+.title>span>i{background:rgba(var(--ac-rgb),.14);box-shadow:inset 0 0 0 1px rgba(var(--ac-rgb),.35)}
+.stat,.row,.node,.empty,.err,.pill{background:rgba(0,0,0,.22)}
+.stat>i.ic2,.row .ic,.sq,.back{background:rgba(255,255,255,.06);box-shadow:var(--sm)}
+.back{border-radius:16px}
+.tag{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+
+.field{background:rgba(0,0,0,.28);transition:box-shadow .2s}
+.field:focus-within{box-shadow:var(--dent),0 0 0 2px rgba(var(--ac-rgb),.70),0 0 28px rgba(var(--ac-rgb),.22)}
+.field input::placeholder{color:#667189}
+
+.plans button{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.plans button.on{color:var(--text);background:rgba(var(--ac-rgb),.16);
+  box-shadow:inset 0 0 0 1.5px rgba(var(--ac-rgb),.75),0 0 22px rgba(var(--ac-rgb),.22)}
+
+.btn{border-radius:18px;color:#fff;background:var(--grad);
+  box-shadow:0 12px 28px rgba(var(--ac-rgb),.34),inset 0 1px 0 rgba(255,255,255,.30);
+  transition:transform .15s,box-shadow .2s,filter .2s}
+.btn:not(:disabled):hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.985);box-shadow:0 6px 16px rgba(var(--ac-rgb),.30),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn.green{color:#04130d;background:linear-gradient(135deg,#10b981,#34d399 60%,#6ee7b7);box-shadow:0 12px 28px rgba(16,185,129,.32),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn.amber{color:#1a1203;background:linear-gradient(135deg,#f59e0b,#fbbf24 60%,#fde68a);box-shadow:0 12px 28px rgba(245,158,11,.32),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn:disabled{background:rgba(255,255,255,.06);color:var(--muted);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);filter:none}
+
+.sq.v{color:var(--blue)}.sq.a{color:var(--amber)}.sq.del{color:var(--red)}
+.toast{background:rgba(22,26,40,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+
+/* ---------- language row ---------- */
+.flags{display:flex;gap:8px;margin:0 -2px 18px;padding:2px 2px 8px;overflow-x:auto;scrollbar-width:none}
+.flags::-webkit-scrollbar{display:none}
+.flags button{flex:none;display:flex;align-items:center;gap:8px;height:42px;padding:0 15px 0 11px;border:0;border-radius:999px;cursor:pointer;font-size:.78rem;font-weight:700;color:var(--muted);
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line);transition:all .2s}
+.flags button span{font-size:1.2rem;line-height:1}
+.flags button.on{color:var(--text);background:rgba(var(--ac-rgb),.18);box-shadow:inset 0 0 0 1.5px rgba(var(--ac-rgb),.8),0 0 22px rgba(var(--ac-rgb),.25);transform:scale(1.04)}
+html[lang="hi"] body{font-family:Roboto,"Noto Sans Devanagari","Nirmala UI",system-ui,sans-serif}
+html[lang="ur"] body{font-family:Roboto,"Noto Naskh Arabic","Noto Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;line-height:1.7}
+html[lang="zh"] body{font-family:Roboto,"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+
+/* ---------- pairing control v2 ---------- */
+.pc{--pc:var(--green);--pc-rgb:52,211,153}
+.pc.closed{--pc:var(--red);--pc-rgb:251,113,133}
+.pc::before{background:linear-gradient(90deg,transparent,rgba(var(--pc-rgb),.95),transparent)!important}
+.pcstate{padding:6px 12px;border-radius:999px;font-size:.66rem!important;letter-spacing:.16em;color:var(--pc);background:rgba(var(--pc-rgb),.12);box-shadow:inset 0 0 0 1px rgba(var(--pc-rgb),.4)}
+.pcHero{display:flex;align-items:center;gap:18px;margin:16px 0 20px;padding:18px;border-radius:24px;background:radial-gradient(120% 140% at 0% 0%,rgba(var(--pc-rgb),.16),rgba(0,0,0,.22) 70%);box-shadow:inset 0 0 0 1px rgba(var(--pc-rgb),.25)}
+.orb{position:relative;flex:none;width:68px;height:68px;display:grid;place-items:center;border-radius:50%;font-size:1.5rem;color:var(--pc);
+  background:rgba(var(--pc-rgb),.14);box-shadow:inset 0 0 0 1.5px rgba(var(--pc-rgb),.7),0 0 30px rgba(var(--pc-rgb),.35);transition:all .4s}
+.orb i{transition:transform .5s cubic-bezier(.2,1.6,.4,1)}
+.pc.closed .orb i{transform:rotate(-12deg) scale(1.05)}
+.orb .ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(var(--pc-rgb),.55);animation:pcPulse 2.4s ease-out infinite}
+.orb .ring.r2{animation-delay:1.2s}
+.pc.closed .orb .ring{animation-duration:3.6s}
+@keyframes pcPulse{from{transform:scale(1);opacity:.9}to{transform:scale(1.9);opacity:0}}
+.pcTxt{min-width:0}.pcTxt b{display:block;font-size:1.05rem;font-weight:900;letter-spacing:.01em;color:var(--text)}
+.pcTxt p{margin:6px 0 0;font-size:.8rem;line-height:1.55;color:var(--muted)}
+.cap{margin-bottom:6px;padding:16px;border-radius:20px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.capTop{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.74rem;font-weight:700;color:var(--label);letter-spacing:.06em}
+.capTop i{color:var(--blue);margin-inline-end:6px}
+.capTop em{font-style:normal;font:800 .95rem 'JetBrains Mono',ui-monospace,monospace;color:var(--text)}
+.capBar{height:10px;margin:12px 0 10px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.capBar u{display:block;height:100%;width:0;border-radius:99px;text-decoration:none;background:linear-gradient(90deg,#10b981,#34d399);box-shadow:0 0 14px rgba(52,211,153,.6);transition:width .7s cubic-bezier(.2,.9,.3,1),background .4s}
+.capBar u.mid{background:linear-gradient(90deg,#f59e0b,#fbbf24);box-shadow:0 0 14px rgba(251,191,36,.55)}
+.capBar u.full{background:linear-gradient(90deg,#ef4444,#fb7185);box-shadow:0 0 14px rgba(251,113,133,.6)}
+.capMeta{font-size:.74rem;color:var(--muted)}.capMeta i{color:var(--blue);margin-inline-end:4px}
+.pcBtn{margin-top:16px;min-height:60px;font-size:.98rem;letter-spacing:.02em;background:linear-gradient(135deg,#ef4444,#fb7185 60%,#fda4af)!important;color:#fff!important;box-shadow:0 14px 30px rgba(251,113,133,.35),inset 0 1px 0 rgba(255,255,255,.3)!important}
+.pc.closed .pcBtn{background:linear-gradient(135deg,#10b981,#34d399 60%,#6ee7b7)!important;color:#04130d!important;box-shadow:0 14px 30px rgba(16,185,129,.35),inset 0 1px 0 rgba(255,255,255,.35)!important}
+.pcBtn:disabled{opacity:.6}
+/* ---------- v5: bot page, clickable rows, server images ---------- */
+.row.clk{cursor:pointer}.row .ic.thumb{background-size:cover;background-position:center;border-radius:16px;box-shadow:0 0 0 2px rgba(52,211,153,.5)}
+.row .acts .go{color:var(--muted);pointer-events:none}
+.backlnk{display:inline-flex;align-items:center;gap:8px;margin:2px 4px 14px;padding:8px 4px;border:0;background:transparent;color:var(--muted);font-size:1rem;font-weight:600;cursor:pointer}
+.bp{padding:0 0 22px!important;text-align:center;overflow:hidden}
+.bpcov{position:relative;height:150px;background-color:#0b0b14;background-repeat:no-repeat}
+.bpcov::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,6,14,.1),rgba(18,20,34,.97)),radial-gradient(70% 90% at 50% 130%,rgba(109,141,255,.55),transparent 70%)}
+.bpav{position:relative;z-index:2;width:104px;height:104px;margin:-58px auto 0;padding:3px;border-radius:32px;background:linear-gradient(135deg,#6d8dff,#b06bff);box-shadow:0 0 0 5px #12141f,0 14px 38px rgba(109,141,255,.55)}
+.bpav img{display:block;width:100%;height:100%;border-radius:29px;object-fit:cover;background:#0b0b14}
+.bpav i{position:absolute;right:-5px;bottom:-5px;width:22px;height:22px;border-radius:50%;background:var(--green);border:4px solid #12141f}.bpav i.off{background:var(--red)}
+.bp h2{margin:14px 16px 0;font-size:1.35rem;font-weight:800}
+.bpnum{margin-top:6px;font:500 .9rem 'JetBrains Mono',ui-monospace,monospace;color:var(--muted)}
+.bptags{justify-content:center}
+.bpstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 14px 0}
+.bpstats div{padding:12px 4px 10px;border-radius:16px;background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.bpstats b{display:block;font-size:1rem;font-weight:800}.bpstats small{display:block;margin-top:3px;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.grow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;margin-bottom:10px;border-radius:20px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.grow .gic{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:15px;color:var(--green);background:rgba(52,211,153,.12);box-shadow:inset 0 0 0 1px rgba(52,211,153,.3)}
+.grow .inf{flex:1;min-width:0}
+.grow .num{font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow .sub{margin-top:4px;font-size:.72rem;color:var(--muted)}.grow .sub .ok{color:var(--green);font-weight:700}.grow .sub .lock{color:var(--amber)}
+.gbtn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 15px;border:0;border-radius:14px;cursor:pointer;font-size:.78rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#2563eb,#6d8dff);box-shadow:0 8px 20px rgba(80,120,255,.3)}
+.gbtn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;background:rgba(128,128,140,.3)}
+.glink{display:flex;align-items:center;gap:6px;margin-top:10px}
+.glink input{flex:1;min-width:0;height:38px;padding:0 12px;border:0;border-radius:12px;outline:0;font:600 .72rem 'JetBrains Mono',ui-monospace,monospace;color:var(--text);background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.glink button,.glink a{display:grid;place-items:center;flex:none;width:38px;height:38px;border:0;border-radius:12px;cursor:pointer;color:var(--text);background:rgba(255,255,255,.08);text-decoration:none}
+.grow .glink{flex:0 0 100%;margin-top:2px}
+.grow .num{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lkPrev{position:relative;display:flex;align-items:flex-end;height:96px;margin:0 0 12px;border-radius:20px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.lkPrev.hide{display:none}
+.lkPrev span{position:absolute;inset:0;background:#0b0b14 center/cover no-repeat}
+.lkPrev::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,rgba(6,6,14,.9))}
+.lkPrev b{position:relative;z-index:1;padding:12px 14px;font-size:.95rem;font-weight:800}
+.qa{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.qb{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:0;border-radius:13px;cursor:pointer;font-size:.72rem;font-weight:800;letter-spacing:.04em;color:var(--muted);background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .12s,background .2s,box-shadow .2s}
+.qb:active{transform:scale(.94)}.qb:disabled{opacity:.5}
+.qb.prem.on{color:#2a1c00;background:linear-gradient(135deg,#fde68a,#fbbf24);box-shadow:0 6px 16px rgba(251,191,36,.35)}
+.qb.ver.on{color:#fff;background:linear-gradient(135deg,#0095f6,#38bdf8);box-shadow:0 6px 16px rgba(0,149,246,.35)}
+.qb.adm.on{color:#fff;background:linear-gradient(135deg,#f97316,#ef4444);box-shadow:0 6px 16px rgba(239,68,68,.35)}
+.bpqa .qa{justify-content:center;margin:14px 14px 0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="vbadge" viewBox="0 0 24 24">
+    <path fill="#0095F6" d="M12 1.5l2.3 1.6 2.8-.2 1.3 2.5 2.5 1.3-.2 2.8 1.6 2.3-1.6 2.3.2 2.8-2.5 1.3-1.3 2.5-2.8-.2L12 22.5l-2.3-1.6-2.8.2-1.3-2.5-2.5-1.3.2-2.8L1.7 12l1.6-2.3-.2-2.8 2.5-1.3 1.3-2.5 2.8.2z"></path>
+    <path d="M7.8 12.3l2.9 2.9 5.5-5.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="index.html" aria-label="Back"><i class="fas fa-arrow-left"></i></a>
+    <a class="back" href="/react.html" aria-label="React page" style="margin-left:auto"><i class="fas fa-bolt"></i></a>
+    <div class="pill"><i class="dot" id="liveDot"></i> Live</div>
+  </div>
+  <div class="flags" id="flags"></div>
+
+  <section class="card" id="login">
+    <h1 class="title"><span><i class="fas fa-lock"></i> Admin access</span></h1>
+    <p class="desc">Enter the admin password to manage premium, verified and admin numbers.</p>
+    <div class="field"><i class="fas fa-key"></i><input id="pw" type="password" placeholder="Admin password" autocomplete="current-password"></div>
+    <button class="btn" id="loginBtn"><i class="fas fa-unlock"></i> Unlock</button>
+    <div class="err" id="loginErr">Wrong password.</div>
+  </section>
+
+  <!-- ===== one bot: its groups + invite links (admin only) ===== -->
+  <div id="botPage" class="hide">
+    <button class="backlnk" id="bpBack" type="button"><i class="fas fa-arrow-left"></i> <span>Back</span></button>
+    <section class="card bp">
+      <div class="bpcov" id="bpCov"></div>
+      <div class="bpav"><img id="bpImg" alt=""><i id="bpDot"></i></div>
+      <h2 id="bpName">—</h2>
+      <div class="bpnum" id="bpNum">—</div>
+      <div class="tags bptags" id="bpTags"></div>
+      <div class="bpqa" id="bpQA"></div>
+      <div class="bpstats">
+        <div><b id="bpGroups">--</b><small>Groups</small></div>
+        <div><b id="bpUp">--</b><small>Uptime</small></div>
+        <div><b id="bpMode">--</b><small>Mode</small></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-people-group"></i> Groups</span><button class="sq" id="bpRefresh" type="button" aria-label="Refresh"><i class="fas fa-rotate"></i></button></h2>
+      <p class="desc">Group links are visible to admins only.</p>
+      <div class="err" id="bpErr"></div>
+      <div id="bpList"><div class="empty">Loading groups…</div></div>
+    </section>
+  </div>
+
+  <div id="panel" class="hide">
+    <section class="card">
+      <h1 class="title"><span><i class="fas fa-crown"></i> Control panel</span></h1>
+      <p class="desc">Everything updates on its own every few seconds.</p>
+      <div class="stats">
+        <div class="stat"><i class="ic2 fas fa-gem"></i><b class="c-white" id="sTotal">0</b><span>Premium</span></div>
+        <div class="stat"><i class="ic2 fas fa-bolt"></i><b class="c-green" id="sActive">0</b><span>Active</span></div>
+        <div class="stat"><i class="ic2 fas fa-circle-check"></i><b class="c-blue" id="sVerified">0</b><span>Verified</span></div>
+        <div class="stat"><i class="ic2 fas fa-user-shield"></i><b class="c-amber" id="sAdmins">0</b><span>Admins</span></div>
+      </div>
+      <div class="node"><span><i class="dot" id="netDot"></i> Network</span><em id="connCount">0 / 6</em></div>
+    </section>
+
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-gem"></i> Give premium</span></h2>
+      <p class="desc">The session limit applies to everyone, including premium and admins.</p>
+      <div class="lbl">WhatsApp number</div>
+      <div class="field"><i class="fas fa-phone"></i><input id="num" type="tel" inputmode="numeric" placeholder="1849xxxxxxx"></div>
+      <div class="lbl">Plan</div>
+      <div class="plans" id="plans">
+        <button data-d="7">7<small>days</small></button>
+        <button data-d="30" class="on">30<small>days</small></button>
+        <button data-d="90">90<small>days</small></button>
+        <button data-d="365">1<small>year</small></button>
+        <button data-d="0"><i class="fas fa-infinity"></i><small>forever</small></button>
+      </div>
+      <button class="btn" id="addBtn"><i class="fas fa-star"></i> Add premium</button>
+      <div class="err" id="addErr"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="title"><span><svg class="vb"><use href="premium.html"></use></svg> Verify user</span><b class="c-blue" id="vCount" style="font-size:.8rem">0</b></h2>
+      <p class="desc">Verified numbers get the blue badge on the home page, next to their bot.</p>
+      <div class="field"><i class="fas fa-phone"></i><input id="vNum" type="tel" inputmode="numeric" placeholder="Number to verify"></div>
+      <button class="btn" id="vBtn"><i class="fas fa-circle-check"></i> Verify</button>
+      <div class="err" id="vErr"></div>
+      <div id="vList" style="margin-top:18px"><div class="empty">Loading…</div></div>
+    </section>
+
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-user-shield"></i> Admin people</span><b class="c-amber" id="aCount" style="font-size:.8rem">0</b></h2>
+      <p class="desc">Admins skip the full-network limit and get an admin badge.</p>
+      <div class="field"><i class="fas fa-phone"></i><input id="aNum" type="tel" inputmode="numeric" placeholder="Admin number"></div>
+      <button class="btn amber" id="aBtn"><i class="fas fa-user-plus"></i> Add admin</button>
+      <div class="err" id="aErr"></div>
+      <div id="aList" style="margin-top:18px"><div class="empty">Loading…</div></div>
+    </section>
+
+    <section class="card pc" id="pcCard">
+      <h2 class="title"><span><i class="fas fa-shield-halved"></i> Pairing control</span><b id="pcState" class="pcstate"></b></h2>
+      <div class="pcHero">
+        <div class="orb"><span class="ring"></span><span class="ring r2"></span><i class="fas fa-lock-open" id="pcIcon"></i></div>
+        <div class="pcTxt"><b id="pcHead">…</b><p id="pcSub"></p></div>
+      </div>
+      <div class="cap">
+        <div class="capTop"><span><i class="fas fa-gauge-high"></i> Capacity</span><em id="pcCap">0 / 6</em></div>
+        <div class="capBar"><u id="pcFill"></u></div>
+        <div class="capMeta"><i class="fas fa-server"></i> <span id="pcLinks"></span></div>
+      </div>
+      <button class="btn pcBtn" id="pcBtn"><i class="fas fa-lock"></i> <span id="pcBtnTxt">Close pairing</span></button>
+    </section>
+
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-server"></i> Other servers</span><b class="c-blue" id="lkCount" style="font-size:.8rem">0</b></h2>
+      <p class="desc">When the network is full or closed, visitors see these buttons and join another server.</p>
+      <div class="field"><i class="fas fa-tag"></i><input id="lkName" type="text" maxlength="40" placeholder="Server name (Server 2)"></div>
+      <div class="field"><i class="fas fa-link"></i><input id="lkUrl" type="url" inputmode="url" placeholder="https://your-other-server.up.railway.app"></div>
+      <div class="field"><i class="fas fa-image"></i><input id="lkImg" type="url" inputmode="url" placeholder="Server image link (optional)"></div>
+      <div class="lkPrev hide" id="lkPrev"><span id="lkPrevImg"></span><b id="lkPrevName"></b></div>
+      <button class="btn green" id="lkBtn"><i class="fas fa-plus"></i> Add link</button>
+      <div class="err" id="lkErr"></div>
+      <div id="lkList" style="margin-top:18px"><div class="empty">Loading…</div></div>
+    </section>
+
+
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-signal"></i> Connected numbers</span></h2>
+      <p class="desc">Live sessions with the prefix and mode each bot uses.</p>
+      <div id="connections"><div class="empty">Loading connections…</div></div>
+    </section>
+
+    <section class="card">
+      <h2 class="title"><span><i class="fas fa-users"></i> Premium users</span></h2>
+      <p class="desc">Tap the badge to verify or the trash to remove premium.</p>
+      <div id="list"><div class="empty">Loading…</div></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let token = null, days = 30;
+/* ---------- languages (shared with index.html and react.html through localStorage 'diana_lang') ---------- */
+const LANGS = { ht:['🇭🇹','Kreyòl'], en:['🇺🇸','English'], fr:['🇫🇷','Français'], es:['🇪🇸','Español'], pt:['🇧🇷','Português'], id:['🇮🇩','Indonesia'], hi:['🇮🇳','हिन्दी'], ur:['🇵🇰','اردو'], zh:['🇨🇳','中文'] };
+const COLS = ['ht', 'pt', 'id', 'fr', 'es', 'hi', 'ur', 'zh'];
+const DICT = [
+["Admin access", "Aksè admin", "Acesso de admin", "Akses admin", "Accès admin", "Acceso de admin", "एडमिन एक्सेस", "ایڈمن رسائی", "管理员入口"],
+["Enter the admin password to manage premium, verified and admin numbers.", "Mete modpas admin nan pou jere nimewo premium, verifye ak admin.", "Digite a senha de admin para gerenciar números premium, verificados e admins.", "Masukkan kata sandi admin untuk mengelola nomor premium, terverifikasi, dan admin.", "Entrez le mot de passe admin pour gérer les numéros premium, vérifiés et admin.", "Escribe la contraseña de admin para gestionar números premium, verificados y admin.", "प्रीमियम, वेरिफ़ाइड और एडमिन नंबर मैनेज करने के लिए एडमिन पासवर्ड डालें।", "پریمیم، تصدیق شدہ اور ایڈمن نمبرز کو منظم کرنے کے لیے ایڈمن پاس ورڈ درج کریں۔", "输入管理员密码以管理高级版、已验证和管理员号码。"],
+["Unlock", "Louvri", "Desbloquear", "Buka", "Déverrouiller", "Desbloquear", "अनलॉक करें", "ان لاک کریں", "解锁"],
+["Control panel", "Panèl kontwòl", "Painel de controle", "Panel kontrol", "Panneau de contrôle", "Panel de control", "कंट्रोल पैनल", "کنٹرول پینل", "控制面板"],
+["Everything updates on its own every few seconds.", "Tout mete ajou poukont li chak kèk segonn.", "Tudo se atualiza sozinho a cada poucos segundos.", "Semuanya diperbarui otomatis setiap beberapa detik.", "Tout se met à jour automatiquement toutes les quelques secondes.", "Todo se actualiza solo cada pocos segundos.", "सब कुछ हर कुछ सेकंड में अपने-आप अपडेट होता है।", "سب کچھ ہر چند سیکنڈ میں خود بخود اپ ڈیٹ ہوتا ہے۔", "所有内容每隔几秒自动更新。"],
+["Active", "Aktif", "Ativos", "Aktif", "Actifs", "Activos", "सक्रिय", "فعال", "活跃"],
+["Verified", "Verifye", "Verificados", "Terverifikasi", "Vérifiés", "Verificados", "वेरिफ़ाइड", "تصدیق شدہ", "已验证"],
+["Admins", "Admin yo", "Admins", "Admin", "Admins", "Admins", "एडमिन", "ایڈمنز", "管理员"],
+["Network", "Rezo", "Rede", "Jaringan", "Réseau", "Red", "नेटवर्क", "نیٹ ورک", "网络"],
+["Give premium", "Bay premium", "Dar premium", "Beri premium", "Donner premium", "Dar premium", "प्रीमियम दें", "پریمیم دیں", "赠送高级版"],
+["Premium numbers can pair even when the network is full.", "Nimewo premium ka konekte menm lè rezo a plen.", "Números premium podem conectar mesmo com a rede cheia.", "Nomor premium tetap bisa terhubung meski jaringan penuh.", "Les numéros premium peuvent se connecter même si le réseau est complet.", "Los números premium pueden vincularse aunque la red esté llena.", "नेटवर्क भरा होने पर भी प्रीमियम नंबर कनेक्ट हो सकते हैं।", "نیٹ ورک بھرا ہو تب بھی پریمیم نمبرز جڑ سکتے ہیں۔", "即使网络已满，高级版号码也可以配对。"],
+["Plan", "Plan", "Plano", "Paket", "Forfait", "Plan", "प्लान", "پلان", "套餐"],
+["days", "jou", "dias", "hari", "jours", "días", "दिन", "دن", "天"],
+["year", "ane", "ano", "tahun", "an", "año", "साल", "سال", "年"],
+["forever", "pou tout tan", "para sempre", "selamanya", "à vie", "para siempre", "हमेशा", "ہمیشہ", "永久"],
+["Add premium", "Ajoute premium", "Adicionar premium", "Tambah premium", "Ajouter premium", "Añadir premium", "प्रीमियम जोड़ें", "پریمیم شامل کریں", "添加高级版"],
+["Verify user", "Verifye itilizatè", "Verificar usuário", "Verifikasi pengguna", "Vérifier un utilisateur", "Verificar usuario", "यूज़र वेरिफ़ाई करें", "صارف کی تصدیق", "验证用户"],
+["Verified numbers get the blue badge on the home page, next to their bot.", "Nimewo verifye yo jwenn badj ble a sou paj akèy la, akote bot yo.", "Números verificados recebem o selo azul na página inicial, ao lado do bot.", "Nomor terverifikasi mendapat lencana biru di beranda, di samping bot mereka.", "Les numéros vérifiés reçoivent le badge bleu sur l’accueil, à côté de leur bot.", "Los números verificados reciben la insignia azul en el inicio, junto a su bot.", "वेरिफ़ाइड नंबर को होम पेज पर बॉट के पास नीला बैज मिलता है।", "تصدیق شدہ نمبرز کو ہوم پیج پر ان کے بوٹ کے ساتھ نیلا بیج ملتا ہے۔", "已验证的号码会在首页其机器人旁显示蓝色徽章。"],
+["Number to verify", "Nimewo pou verifye", "Número para verificar", "Nomor yang diverifikasi", "Numéro à vérifier", "Número a verificar", "वेरिफ़ाई करने वाला नंबर", "تصدیق کے لیے نمبر", "要验证的号码"],
+["Loading…", "Ap chaje…", "Carregando…", "Memuat…", "Chargement…", "Cargando…", "लोड हो रहा है…", "لوڈ ہو رہا ہے…", "加载中…"],
+["Admin people", "Moun admin yo", "Pessoas admin", "Orang admin", "Personnes admin", "Personas admin", "एडमिन लोग", "ایڈمن افراد", "管理员成员"],
+["Admins skip the full-network limit and get an admin badge.", "Admin yo pa gen limit rezo plen epi yo jwenn badj admin.", "Admins ignoram o limite de rede cheia e recebem selo de admin.", "Admin melewati batas jaringan penuh dan mendapat lencana admin.", "Les admins ignorent la limite du réseau complet et ont un badge admin.", "Los admins se saltan el límite de red llena y reciben una insignia de admin.", "एडमिन नेटवर्क भरे होने की सीमा से बाहर रहते हैं और उन्हें एडमिन बैज मिलता है।", "ایڈمنز نیٹ ورک بھرنے کی حد سے مستثنیٰ ہوتے ہیں اور انہیں ایڈمن بیج ملتا ہے۔", "管理员不受网络已满限制，并获得管理员徽章。"],
+["Admin number", "Nimewo admin", "Número do admin", "Nomor admin", "Numéro admin", "Número de admin", "एडमिन नंबर", "ایڈمن نمبر", "管理员号码"],
+["Add admin", "Ajoute admin", "Adicionar admin", "Tambah admin", "Ajouter admin", "Añadir admin", "एडमिन जोड़ें", "ایڈمن شامل کریں", "添加管理员"],
+["Pairing control", "Kontwòl koneksyon", "Controle de conexões", "Kontrol penautan", "Contrôle des connexions", "Control de vinculación", "पेयरिंग कंट्रोल", "پیئرنگ کنٹرول", "配对控制"],
+["Pairing is open", "Koneksyon yo ouvè", "As conexões estão abertas", "Penautan terbuka", "Les connexions sont ouvertes", "La vinculación está abierta", "पेयरिंग खुली है", "پیئرنگ کھلی ہے", "配对已开放"],
+["Pairing is closed", "Koneksyon yo fèmen", "As conexões estão fechadas", "Penautan ditutup", "Les connexions sont fermées", "La vinculación está cerrada", "पेयरिंग बंद है", "پیئرنگ بند ہے", "配对已关闭"],
+["Anyone can create a new session right now.", "Nenpòt moun ka kreye yon nouvo sesyon kounye a.", "Qualquer pessoa pode criar uma nova sessão agora.", "Siapa pun bisa membuat sesi baru sekarang.", "Tout le monde peut créer une nouvelle session maintenant.", "Cualquiera puede crear una sesión nueva ahora.", "अभी कोई भी नया सेशन बना सकता है।", "اب کوئی بھی نیا سیشن بنا سکتا ہے۔", "现在任何人都可以创建新会话。"],
+["Nobody can create a new session. Premium and admin numbers can still pair.", "Pèsonn pa ka kreye yon nouvo sesyon. Nimewo premium ak admin yo ka toujou konekte.", "Ninguém pode criar nova sessão. Números premium e admin ainda podem conectar.", "Tidak ada yang bisa membuat sesi baru. Nomor premium dan admin tetap bisa terhubung.", "Personne ne peut créer de session. Les numéros premium et admin peuvent encore se connecter.", "Nadie puede crear sesiones nuevas. Los números premium y admin aún pueden vincularse.", "कोई नया सेशन नहीं बना सकता। प्रीमियम और एडमिन नंबर अब भी कनेक्ट हो सकते हैं।", "کوئی نیا سیشن نہیں بنا سکتا۔ پریمیم اور ایڈمن نمبرز اب بھی جڑ سکتے ہیں۔", "任何人都无法创建新会话，高级版和管理员号码仍可配对。"],
+["Close pairing", "Fèmen koneksyon", "Fechar conexões", "Tutup penautan", "Fermer les connexions", "Cerrar vinculación", "पेयरिंग बंद करें", "پیئرنگ بند کریں", "关闭配对"],
+["Open pairing", "Louvri koneksyon", "Abrir conexões", "Buka penautan", "Ouvrir les connexions", "Abrir vinculación", "पेयरिंग खोलें", "پیئرنگ کھولیں", "开放配对"],
+["OPEN", "OUVÈ", "ABERTO", "TERBUKA", "OUVERT", "ABIERTO", "खुला", "کھلا", "开放"],
+["CLOSED", "FÈMEN", "FECHADO", "DITUTUP", "FERMÉ", "CERRADO", "बंद", "بند", "关闭"],
+["Capacity", "Kapasite", "Capacidade", "Kapasitas", "Capacité", "Capacidad", "क्षमता", "گنجائش", "容量"],
+["{c} / {m} bots connected", "{c} / {m} bot konekte", "{c} / {m} bots conectados", "{c} / {m} bot terhubung", "{c} / {m} bots connectés", "{c} / {m} bots conectados", "{c} / {m} बॉट कनेक्टेड", "{c} / {m} بوٹس منسلک", "已连接 {c} / {m} 个机器人"],
+["{n} other servers shown to visitors", "{n} lòt sèvè montre bay vizitè yo", "{n} outros servidores mostrados aos visitantes", "{n} server lain ditampilkan ke pengunjung", "{n} autres serveurs affichés aux visiteurs", "{n} otros servidores se muestran a los visitantes", "{n} अन्य सर्वर विज़िटर को दिखते हैं", "{n} دیگر سرورز وزیٹرز کو دکھائے جاتے ہیں", "向访客展示 {n} 个其他服务器"],
+["Pairing opened ✓", "Koneksyon ouvè ✓", "Conexões abertas ✓", "Penautan dibuka ✓", "Connexions ouvertes ✓", "Vinculación abierta ✓", "पेयरिंग खुल गई ✓", "پیئرنگ کھل گئی ✓", "配对已开放 ✓"],
+["Pairing closed ✓", "Koneksyon fèmen ✓", "Conexões fechadas ✓", "Penautan ditutup ✓", "Connexions fermées ✓", "Vinculación cerrada ✓", "पेयरिंग बंद हो गई ✓", "پیئرنگ بند ہو گئی ✓", "配对已关闭 ✓"],
+["Failed", "Echwe", "Falhou", "Gagal", "Échec", "Falló", "विफल", "ناکام", "失败"],
+["When the network is full or closed, visitors see these buttons and join another server.", "Lè rezo a plen oswa fèmen, vizitè yo wè bouton sa yo pou ale sou yon lòt sèvè.", "Quando a rede está cheia ou fechada, os visitantes veem estes botões e entram em outro servidor.", "Saat jaringan penuh atau ditutup, pengunjung melihat tombol ini dan bergabung ke server lain.", "Quand le réseau est complet ou fermé, les visiteurs voient ces boutons et rejoignent un autre serveur.", "Cuando la red está llena o cerrada, los visitantes ven estos botones y se unen a otro servidor.", "नेटवर्क भरा या बंद होने पर विज़िटर को ये बटन दिखते हैं और वे दूसरे सर्वर पर जाते हैं।", "نیٹ ورک بھرا یا بند ہو تو وزیٹرز کو یہ بٹن دکھائی دیتے ہیں اور وہ دوسرے سرور پر جاتے ہیں۔", "当网络已满或关闭时，访客会看到这些按钮并加入其他服务器。"],
+["Server name (Server 2)", "Non sèvè (Sèvè 2)", "Nome do servidor (Servidor 2)", "Nama server (Server 2)", "Nom du serveur (Serveur 2)", "Nombre del servidor (Servidor 2)", "सर्वर का नाम (सर्वर 2)", "سرور کا نام (سرور 2)", "服务器名称（服务器 2）"],
+["Add link", "Ajoute lyen", "Adicionar link", "Tambah tautan", "Ajouter un lien", "Añadir enlace", "लिंक जोड़ें", "لنک شامل کریں", "添加链接"],
+["No other server yet.", "Poko gen lòt sèvè.", "Nenhum outro servidor ainda.", "Belum ada server lain.", "Aucun autre serveur pour l’instant.", "Aún no hay otros servidores.", "अभी कोई दूसरा सर्वर नहीं।", "ابھی کوئی دوسرا سرور نہیں۔", "暂无其他服务器。"],
+["Enter a full link starting with https://", "Mete yon lyen konplè ki kòmanse ak https://", "Digite um link completo começando com https://", "Masukkan tautan lengkap yang diawali https://", "Entrez un lien complet commençant par https://", "Escribe un enlace completo que empiece por https://", "https:// से शुरू होने वाला पूरा लिंक डालें", "https:// سے شروع ہونے والا مکمل لنک درج کریں", "请输入以 https:// 开头的完整链接"],
+["Link added ✓", "Lyen ajoute ✓", "Link adicionado ✓", "Tautan ditambahkan ✓", "Lien ajouté ✓", "Enlace añadido ✓", "लिंक जोड़ा गया ✓", "لنک شامل ہو گیا ✓", "链接已添加 ✓"],
+["Link removed", "Lyen retire", "Link removido", "Tautan dihapus", "Lien supprimé", "Enlace eliminado", "लिंक हटाया गया", "لنک ہٹا دیا گیا", "链接已删除"],
+["React credits", "Kredi reyaksyon", "Créditos de reação", "Kredit reaksi", "Crédits de réaction", "Créditos de reacción", "रिएक्शन क्रेडिट", "ری ایکشن کریڈٹس", "表情反应额度"],
+["Every visitor of the react page gets {f} free credits; one reaction costs {c}. Add credits for a premium number, then send its code to the person.", "Chak vizitè paj reyaksyon an jwenn {f} kredi gratis; yon reyaksyon koute {c}. Ajoute kredi pou yon nimewo premium, apre sa voye kòd li bay moun nan.", "Cada visitante da página de reações recebe {f} créditos grátis; uma reação custa {c}. Adicione créditos a um número premium e envie o código à pessoa.", "Setiap pengunjung halaman reaksi mendapat {f} kredit gratis; satu reaksi berharga {c}. Tambah kredit untuk nomor premium, lalu kirim kodenya ke orangnya.", "Chaque visiteur de la page de réactions reçoit {f} crédits gratuits ; une réaction coûte {c}. Ajoutez des crédits à un numéro premium, puis envoyez-lui son code.", "Cada visitante de la página de reacciones recibe {f} créditos gratis; una reacción cuesta {c}. Añade créditos a un número premium y envía el código a la persona.", "रिएक्शन पेज के हर विज़िटर को {f} मुफ़्त क्रेडिट मिलते हैं; एक रिएक्शन की कीमत {c} है। प्रीमियम नंबर के लिए क्रेडिट जोड़ें, फिर कोड उस व्यक्ति को भेजें।", "ری ایکشن صفحے کے ہر وزیٹر کو {f} مفت کریڈٹس ملتے ہیں؛ ایک ری ایکشن کی قیمت {c} ہے۔ پریمیم نمبر کے لیے کریڈٹس شامل کریں، پھر کوڈ اس شخص کو بھیجیں۔", "每位访问表情页面的用户有 {f} 免费额度，每次反应需要 {c}。为高级版号码充值后，把代码发给对方。"],
+["Visitors", "Vizitè", "Visitantes", "Pengunjung", "Visiteurs", "Visitantes", "विज़िटर", "وزیٹرز", "访客"],
+["Reactions sent", "Reyaksyon voye", "Reações enviadas", "Reaksi terkirim", "Réactions envoyées", "Reacciones enviadas", "भेजे गए रिएक्शन", "بھیجے گئے ری ایکشنز", "已发送反应"],
+["Premium number", "Nimewo premium", "Número premium", "Nomor premium", "Numéro premium", "Número premium", "प्रीमियम नंबर", "پریمیم نمبر", "高级版号码"],
+["Credits to add", "Kredi pou ajoute", "Créditos a adicionar", "Kredit yang ditambah", "Crédits à ajouter", "Créditos a añadir", "जोड़ने के क्रेडिट", "شامل کرنے کے کریڈٹس", "充值额度"],
+["Add credits", "Ajoute kredi", "Adicionar créditos", "Tambah kredit", "Ajouter des crédits", "Añadir créditos", "क्रेडिट जोड़ें", "کریڈٹس شامل کریں", "添加额度"],
+["Enter the number of credits.", "Mete kantite kredi yo.", "Digite a quantidade de créditos.", "Masukkan jumlah kredit.", "Entrez le nombre de crédits.", "Escribe la cantidad de créditos.", "क्रेडिट की संख्या डालें।", "کریڈٹس کی تعداد درج کریں۔", "请输入额度数量。"],
+["Credits added ✓  Code: {c}", "Kredi ajoute ✓  Kòd: {c}", "Créditos adicionados ✓  Código: {c}", "Kredit ditambah ✓  Kode: {c}", "Crédits ajoutés ✓  Code : {c}", "Créditos añadidos ✓  Código: {c}", "क्रेडिट जोड़े गए ✓  कोड: {c}", "کریڈٹس شامل ہو گئے ✓  کوڈ: {c}", "额度已添加 ✓  代码：{c}"],
+["{n} credits", "{n} kredi", "{n} créditos", "{n} kredit", "{n} crédits", "{n} créditos", "{n} क्रेडिट", "{n} کریڈٹس", "{n} 额度"],
+["{c} credits · {u} sent · {d} device(s)", "{c} kredi · {u} voye · {d} aparèy", "{c} créditos · {u} enviadas · {d} dispositivo(s)", "{c} kredit · {u} terkirim · {d} perangkat", "{c} crédits · {u} envoyées · {d} appareil(s)", "{c} créditos · {u} enviadas · {d} dispositivo(s)", "{c} क्रेडिट · {u} भेजे · {d} डिवाइस", "{c} کریڈٹس · {u} بھیجے · {d} ڈیوائس", "{c} 额度 · 已发 {u} 次 · {d} 台设备"],
+["Code", "Kòd", "Código", "Kode", "Code", "Código", "कोड", "کوڈ", "代码"],
+["No credit accounts yet.", "Poko gen kont kredi.", "Nenhuma conta de créditos ainda.", "Belum ada akun kredit.", "Aucun compte de crédits pour l’instant.", "Aún no hay cuentas de créditos.", "अभी कोई क्रेडिट खाता नहीं।", "ابھی کوئی کریڈٹ اکاؤنٹ نہیں۔", "暂无额度账户。"],
+["Code copied ✓", "Kòd kopye ✓", "Código copiado ✓", "Kode disalin ✓", "Code copié ✓", "Código copiado ✓", "कोड कॉपी हुआ ✓", "کوڈ کاپی ہو گیا ✓", "代码已复制 ✓"],
+["Make a new code for +{n}? Devices using the old code are signed out.", "Fè yon nouvo kòd pou +{n}? Aparèy ki itilize ansyen kòd la ap dekonekte.", "Criar um novo código para +{n}? Dispositivos com o código antigo serão desconectados.", "Buat kode baru untuk +{n}? Perangkat dengan kode lama akan keluar.", "Créer un nouveau code pour +{n} ? Les appareils avec l’ancien code seront déconnectés.", "¿Crear un código nuevo para +{n}? Los dispositivos con el código anterior se desconectarán.", "+{n} के लिए नया कोड बनाएँ? पुराने कोड वाले डिवाइस साइन आउट हो जाएँगे।", "+{n} کے لیے نیا کوڈ بنائیں؟ پرانے کوڈ والی ڈیوائسز سائن آؤٹ ہو جائیں گی۔", "为 +{n} 生成新代码？使用旧代码的设备将被登出。"],
+["New code: {c}", "Nouvo kòd: {c}", "Novo código: {c}", "Kode baru: {c}", "Nouveau code : {c}", "Código nuevo: {c}", "नया कोड: {c}", "نیا کوڈ: {c}", "新代码：{c}"],
+["Delete the credit account of +{n}?", "Efase kont kredi +{n}?", "Excluir a conta de créditos de +{n}?", "Hapus akun kredit +{n}?", "Supprimer le compte de crédits de +{n} ?", "¿Eliminar la cuenta de créditos de +{n}?", "+{n} का क्रेडिट खाता हटाएँ?", "+{n} کا کریڈٹ اکاؤنٹ حذف کریں؟", "删除 +{n} 的额度账户？"],
+["Removed", "Retire", "Removido", "Dihapus", "Supprimé", "Eliminado", "हटाया गया", "ہٹا دیا گیا", "已删除"],
+["Connected numbers", "Nimewo konekte", "Números conectados", "Nomor terhubung", "Numéros connectés", "Números conectados", "कनेक्टेड नंबर", "منسلک نمبرز", "已连接号码"],
+["Live sessions with the prefix and mode each bot uses.", "Sesyon an dirèk ak prefiks ak mòd chak bot itilize.", "Sessões ativas com o prefixo e o modo de cada bot.", "Sesi aktif beserta prefiks dan mode tiap bot.", "Sessions actives avec le préfixe et le mode de chaque bot.", "Sesiones activas con el prefijo y el modo de cada bot.", "हर बॉट के प्रीफ़िक्स और मोड के साथ लाइव सेशन।", "ہر بوٹ کے پریفکس اور موڈ کے ساتھ لائیو سیشنز۔", "实时会话，以及每个机器人使用的前缀和模式。"],
+["Loading connections…", "Ap chaje koneksyon yo…", "Carregando conexões…", "Memuat koneksi…", "Chargement des connexions…", "Cargando conexiones…", "कनेक्शन लोड हो रहे हैं…", "کنکشنز لوڈ ہو رہے ہیں…", "正在加载连接…"],
+["No connected numbers right now.", "Pa gen nimewo konekte kounye a.", "Nenhum número conectado agora.", "Tidak ada nomor terhubung saat ini.", "Aucun numéro connecté pour le moment.", "No hay números conectados ahora.", "अभी कोई नंबर कनेक्टेड नहीं।", "اس وقت کوئی نمبر منسلک نہیں۔", "当前没有已连接的号码。"],
+["Connected", "Konekte", "Conectado", "Terhubung", "Connecté", "Conectado", "कनेक्टेड", "منسلک", "已连接"],
+["Standard", "Estanda", "Padrão", "Standar", "Standard", "Estándar", "स्टैंडर्ड", "اسٹینڈرڈ", "标准"],
+["Premium users", "Itilizatè premium", "Usuários premium", "Pengguna premium", "Utilisateurs premium", "Usuarios premium", "प्रीमियम यूज़र", "پریمیم صارفین", "高级版用户"],
+["Tap the badge to verify or the trash to remove premium.", "Peze badj la pou verifye oswa poubèl la pou retire premium.", "Toque no selo para verificar ou na lixeira para remover o premium.", "Ketuk lencana untuk verifikasi atau tempat sampah untuk menghapus premium.", "Touchez le badge pour vérifier ou la corbeille pour retirer le premium.", "Toca la insignia para verificar o la papelera para quitar el premium.", "वेरिफ़ाई के लिए बैज दबाएँ या प्रीमियम हटाने के लिए कचरा आइकन।", "تصدیق کے لیے بیج یا پریمیم ہٹانے کے لیے ٹریش دبائیں۔", "点击徽章进行验证，点击垃圾桶移除高级版。"],
+["No premium users yet.", "Poko gen itilizatè premium.", "Nenhum usuário premium ainda.", "Belum ada pengguna premium.", "Aucun utilisateur premium pour l’instant.", "Aún no hay usuarios premium.", "अभी कोई प्रीमियम यूज़र नहीं।", "ابھی کوئی پریمیم صارف نہیں۔", "暂无高级版用户。"],
+["No verified numbers yet.", "Poko gen nimewo verifye.", "Nenhum número verificado ainda.", "Belum ada nomor terverifikasi.", "Aucun numéro vérifié pour l’instant.", "Aún no hay números verificados.", "अभी कोई वेरिफ़ाइड नंबर नहीं।", "ابھی کوئی تصدیق شدہ نمبر نہیں۔", "暂无已验证号码。"],
+["No admin people yet.", "Poko gen moun admin.", "Nenhum admin ainda.", "Belum ada admin.", "Aucun admin pour l’instant.", "Aún no hay admins.", "अभी कोई एडमिन नहीं।", "ابھی کوئی ایڈمن نہیں۔", "暂无管理员。"],
+["Forever", "Pou tout tan", "Para sempre", "Selamanya", "À vie", "Para siempre", "हमेशा के लिए", "ہمیشہ کے لیے", "永久"],
+["{n} days left", "{n} jou rete", "{n} dias restantes", "{n} hari lagi", "{n} jours restants", "{n} días restantes", "{n} दिन बाकी", "{n} دن باقی", "剩余 {n} 天"],
+["{n} hours left", "{n} è rete", "{n} horas restantes", "{n} jam lagi", "{n} heures restantes", "{n} horas restantes", "{n} घंटे बाकी", "{n} گھنٹے باقی", "剩余 {n} 小时"],
+["Prefix", "Prefiks", "Prefixo", "Prefiks", "Préfixe", "Prefijo", "प्रीफ़िक्स", "پریفکس", "前缀"],
+["Mode", "Mòd", "Modo", "Mode", "Mode", "Modo", "मोड", "موڈ", "模式"],
+["Admin", "Admin", "Admin", "Admin", "Admin", "Admin", "एडमिन", "ایڈمن", "管理员"],
+["Online", "An liy", "Online", "Online", "En ligne", "En línea", "ऑनलाइन", "آن لائن", "在线"],
+["Offline", "Dekonekte", "Offline", "Offline", "Hors ligne", "Sin conexión", "ऑफ़लाइन", "آف لائن", "离线"],
+["online", "an liy", "online", "online", "en ligne", "en línea", "ऑनलाइन", "آن لائن", "在线"],
+["offline", "dekonekte", "offline", "offline", "hors ligne", "sin conexión", "ऑफ़लाइन", "آف لائن", "离线"],
+["Premium added ✓", "Premium ajoute ✓", "Premium adicionado ✓", "Premium ditambahkan ✓", "Premium ajouté ✓", "Premium añadido ✓", "प्रीमियम जोड़ा गया ✓", "پریمیم شامل ہو گیا ✓", "已添加高级版 ✓"],
+["Verified ✓", "Verifye ✓", "Verificado ✓", "Terverifikasi ✓", "Vérifié ✓", "Verificado ✓", "वेरिफ़ाइड ✓", "تصدیق شدہ ✓", "已验证 ✓"],
+["Admin added ✓", "Admin ajoute ✓", "Admin adicionado ✓", "Admin ditambahkan ✓", "Admin ajouté ✓", "Admin añadido ✓", "एडमिन जोड़ा गया ✓", "ایڈمن شامل ہو گیا ✓", "已添加管理员 ✓"],
+["Verification removed", "Verifikasyon retire", "Verificação removida", "Verifikasi dihapus", "Vérification retirée", "Verificación eliminada", "वेरिफ़िकेशन हटाया गया", "تصدیق ہٹا دی گئی", "已取消验证"],
+["Admin removed", "Admin retire", "Admin removido", "Admin dihapus", "Admin retiré", "Admin eliminado", "एडमिन हटाया गया", "ایڈمن ہٹا دیا گیا", "已移除管理员"],
+["Premium removed", "Premium retire", "Premium removido", "Premium dihapus", "Premium retiré", "Premium eliminado", "प्रीमियम हटाया गया", "پریمیم ہٹا دیا گیا", "已移除高级版"],
+["Remove premium from +{n}?", "Retire premium sou +{n}?", "Remover premium de +{n}?", "Hapus premium dari +{n}?", "Retirer le premium de +{n} ?", "¿Quitar el premium de +{n}?", "+{n} से प्रीमियम हटाएँ?", "+{n} سے پریمیم ہٹائیں؟", "移除 +{n} 的高级版？"],
+["Remove admin +{n}?", "Retire admin +{n}?", "Remover admin +{n}?", "Hapus admin +{n}?", "Retirer l’admin +{n} ?", "¿Quitar al admin +{n}?", "एडमिन +{n} हटाएँ?", "ایڈمن +{n} ہٹائیں؟", "移除管理员 +{n}？"],
+["Enter a valid WhatsApp number.", "Mete yon nimewo WhatsApp ki valid.", "Digite um número de WhatsApp válido.", "Masukkan nomor WhatsApp yang valid.", "Entrez un numéro WhatsApp valide.", "Escribe un número de WhatsApp válido.", "सही WhatsApp नंबर दर्ज करें।", "درست واٹس ایپ نمبر درج کریں۔", "请输入有效的 WhatsApp 号码。"],
+["Failed.", "Echwe.", "Falhou.", "Gagal.", "Échec.", "Falló.", "विफल।", "ناکام۔", "失败。"],
+["Server unreachable", "Sèvè a pa reponn", "Servidor inacessível", "Server tidak terjangkau", "Serveur injoignable", "Servidor inaccesible", "सर्वर उपलब्ध नहीं", "سرور دستیاب نہیں", "服务器无法访问"],
+["Wrong password.", "Move modpas.", "Senha incorreta.", "Kata sandi salah.", "Mot de passe incorrect.", "Contraseña incorrecta.", "गलत पासवर्ड।", "غلط پاس ورڈ۔", "密码错误。"],
+["Admin password", "Modpas admin", "Senha de admin", "Kata sandi admin", "Mot de passe admin", "Contraseña de admin", "एडमिन पासवर्ड", "ایڈمن پاس ورڈ", "管理员密码"],
+["Language", "Lang", "Idioma", "Bahasa", "Langue", "Idioma", "भाषा", "زبان", "语言"],
+["Choose your language", "Chwazi lang ou", "Escolha seu idioma", "Pilih bahasa kamu", "Choisissez votre langue", "Elige tu idioma", "अपनी भाषा चुनें", "اپنی زبان چنیں", "选择你的语言"],
+["Live", "An dirèk", "Ao vivo", "Langsung", "En direct", "En vivo", "लाइव", "لائیو", "直播中"],
+["Premium", "Premium", "Premium", "Premium", "Premium", "Premium", "प्रीमियम", "پریمیم", "高级版"],
+["WhatsApp number", "Nimewo WhatsApp", "Número do WhatsApp", "Nomor WhatsApp", "Numéro WhatsApp", "Número de WhatsApp", "WhatsApp नंबर", "واٹس ایپ نمبر", "WhatsApp 号码"],
+["Unable to copy.", "Pa ka kopye.", "Não foi possível copiar.", "Tidak bisa menyalin.", "Impossible de copier.", "No se pudo copiar.", "कॉपी नहीं हो सका।", "کاپی نہیں ہو سکا۔", "无法复制。"],
+["Other servers", "Lòt sèvè", "Outros servidores", "Server lain", "Autres serveurs", "Otros servidores", "अन्य सर्वर", "دیگر سرورز", "其他服务器"],
+["Verify", "Verifye", "Verificar", "Verifikasi", "Vérifier", "Verificar", "वेरिफ़ाई करें", "تصدیق کریں", "验证"],
+["Official server", "Sèvè ofisyèl", "Servidor oficial", "Server resmi", "Serveur officiel", "Servidor oficial", "आधिकारिक सर्वर", "سرکاری سرور", "官方服务器"],
+["Open panel", "Louvri panèl la", "Abrir painel", "Buka panel", "Ouvrir le panneau", "Abrir panel", "पैनल खोलें", "پینل کھولیں", "打开面板"],
+["Running", "Ap mache", "Em execução", "Berjalan", "En marche", "En marcha", "चल रहा है", "چل رہا ہے", "运行中"],
+["Reconnecting", "Ap rekonekte", "Reconectando", "Menyambung ulang", "Reconnexion", "Reconectando", "दोबारा कनेक्ट हो रहा है", "دوبارہ کنیکٹ ہو رہا ہے", "重新连接中"],
+["Commands", "Kòmand", "Comandos", "Perintah", "Commandes", "Comandos", "कमांड", "کمانڈز", "命令"],
+["Groups", "Gwoup", "Grupos", "Grup", "Groupes", "Grupos", "ग्रुप", "گروپس", "群组"],
+["Plan", "Plan", "Plano", "Paket", "Forfait", "Plan", "प्लान", "پلان", "套餐"],
+["Join server", "Antre nan sèvè a", "Entrar no servidor", "Gabung server", "Rejoindre le serveur", "Unirse al servidor", "सर्वर से जुड़ें", "سرور میں شامل ہوں", "加入服务器"],
+["Restarts", "Rekòmansman", "Reinícios", "Restart", "Redémarrages", "Reinicios", "रीस्टार्ट", "ری اسٹارٹ", "重启次数"],
+["Node", "Nœud", "Nó", "Node", "Nœud", "Nodo", "नोड", "نوڈ", "节点"],
+["Server ID", "ID sèvè", "ID do servidor", "ID server", "ID du serveur", "ID del servidor", "सर्वर ID", "سرور آئی ڈی", "服务器 ID"],
+["Slot {n}", "Plas {n}", "Vaga {n}", "Slot {n}", "Place {n}", "Plaza {n}", "स्लॉट {n}", "سلاٹ {n}", "名额 {n}"],
+["Get link", "Pran lyen", "Obter link", "Ambil tautan", "Obtenir le lien", "Obtener enlace", "लिंक पाएँ", "لنک حاصل کریں", "获取链接"],
+["Copy link", "Kopye lyen", "Copiar link", "Salin tautan", "Copier le lien", "Copiar enlace", "लिंक कॉपी करें", "لنک کاپی کریں", "复制链接"],
+["Open link", "Louvri lyen", "Abrir link", "Buka tautan", "Ouvrir le lien", "Abrir enlace", "लिंक खोलें", "لنک کھولیں", "打开链接"],
+["Refresh", "Rafrechi", "Atualizar", "Segarkan", "Actualiser", "Actualizar", "रीफ़्रेश", "ریفریش", "刷新"],
+["No groups found.", "Pa jwenn okenn gwoup.", "Nenhum grupo encontrado.", "Tidak ada grup.", "Aucun groupe trouvé.", "No se encontraron grupos.", "कोई ग्रुप नहीं मिला।", "کوئی گروپ نہیں ملا۔", "未找到群组。"],
+["Loading groups…", "Ap chaje gwoup yo…", "Carregando grupos…", "Memuat grup…", "Chargement des groupes…", "Cargando grupos…", "ग्रुप लोड हो रहे हैं…", "گروپس لوڈ ہو رہے ہیں…", "正在加载群组…"],
+["Bot is not admin in this group.", "Bot la pa admin nan gwoup sa a.", "O bot não é admin neste grupo.", "Bot bukan admin di grup ini.", "Le bot n’est pas admin de ce groupe.", "El bot no es admin de este grupo.", "बॉट इस ग्रुप में एडमिन नहीं है।", "بوٹ اس گروپ میں ایڈمن نہیں ہے۔", "机器人不是该群管理员。"],
+["Link copied ✓", "Lyen kopye ✓", "Link copiado ✓", "Tautan disalin ✓", "Lien copié ✓", "Enlace copiado ✓", "लिंक कॉपी हुआ ✓", "لنک کاپی ہو گیا ✓", "链接已复制 ✓"],
+["{n} members", "{n} manm", "{n} membros", "{n} anggota", "{n} membres", "{n} miembros", "{n} सदस्य", "{n} اراکین", "{n} 名成员"],
+["Bot admin", "Bot la admin", "Bot admin", "Bot admin", "Bot admin", "Bot admin", "बॉट एडमिन", "بوٹ ایڈمن", "机器人是管理员"],
+["Group links are visible to admins only.", "Se admin sèlman ki ka wè lyen gwoup yo.", "Só admins veem os links dos grupos.", "Hanya admin yang bisa melihat tautan grup.", "Seuls les admins voient les liens des groupes.", "Solo los admins ven los enlaces de los grupos.", "ग्रुप लिंक सिर्फ़ एडमिन को दिखते हैं।", "گروپ لنکس صرف ایڈمن کو نظر آتے ہیں۔", "群链接仅管理员可见。"],
+["Server image link (optional)", "Lyen imaj sèvè a (opsyonèl)", "Link da imagem do servidor (opcional)", "Tautan gambar server (opsional)", "Lien de l’image du serveur (facultatif)", "Enlace de la imagen del servidor (opcional)", "सर्वर इमेज लिंक (वैकल्पिक)", "سرور تصویر کا لنک (اختیاری)", "服务器图片链接（可选）"],
+["Open bot page", "Louvri paj bot la", "Abrir página do bot", "Buka halaman bot", "Ouvrir la page du bot", "Abrir página del bot", "बॉट पेज खोलें", "بوٹ پیج کھولیں", "打开机器人页面"],
+["Could not load groups.", "Pa ka chaje gwoup yo.", "Não foi possível carregar os grupos.", "Gagal memuat grup.", "Impossible de charger les groupes.", "No se pudieron cargar los grupos.", "ग्रुप लोड नहीं हो सके।", "گروپس لوڈ نہیں ہو سکے۔", "无法加载群组。"],
+["Group link is only available when the bot is admin.", "Lyen gwoup la disponib sèlman si bot la admin.", "O link só está disponível se o bot for admin.", "Tautan hanya tersedia jika bot admin.", "Le lien n’est disponible que si le bot est admin.", "El enlace solo está disponible si el bot es admin.", "लिंक तभी मिलता है जब बॉट एडमिन हो।", "لنک صرف تب ملتا ہے جب بوٹ ایڈمن ہو۔", "仅当机器人是管理员时才能获取链接。"],
+["Live preview", "Aperçi an dirèk", "Prévia ao vivo", "Pratinjau langsung", "Aperçu en direct", "Vista previa en vivo", "लाइव प्रीव्यू", "لائیو پیش نظارہ", "实时预览"],
+["Design your menu", "Fè meni w bèl", "Desenhe seu menu", "Rancang menumu", "Créez votre menu", "Diseña tu menú", "अपना मेन्यू डिज़ाइन करें", "اپنا مینو ڈیزائن کریں", "设计你的菜单"],
+["Back", "Retounen", "Voltar", "Kembali", "Retour", "Volver", "वापस", "واپس", "返回"],
+["Uptime", "Tan aktif", "Tempo ativo", "Waktu aktif", "Temps actif", "Tiempo activo", "अपटाइम", "اپ ٹائم", "运行时间"],
+["Network locked", "Rezo a bloke", "Rede bloqueada", "Jaringan terkunci", "Réseau verrouillé", "Red bloqueada", "नेटवर्क लॉक है", "نیٹ ورک لاک ہے", "网络已锁定"],
+["All {m} sessions are in use. It opens by itself when a slot is free, and nobody can bypass it, not even admins.", "Tout {m} sesyon yo okipe. Li louvri poukont li le yon plas libere, e pèsonn pa ka kontoune l, menm admin yo.", "Todas as {m} sessões estão em uso. Abre sozinho quando uma vaga ficar livre, e ninguém pode burlar, nem admins.", "Semua {m} sesi sedang dipakai. Terbuka otomatis saat ada slot kosong, dan tidak ada yang bisa melewatinya, bahkan admin.", "Les {m} sessions sont utilisées. Il se rouvre seul quand une place se libère, et personne ne peut le contourner, pas même les admins.", "Las {m} sesiones están en uso. Se abre solo cuando queda un lugar libre y nadie puede saltárselo, ni los admins.", "सभी {m} सेशन उपयोग में हैं। स्लॉट खाली होते ही यह अपने-आप खुल जाएगा, और इसे कोई बायपास नहीं कर सकता, एडमिन भी नहीं।", "تمام {m} سیشنز استعمال میں ہیں۔ جگہ خالی ہوتے ہی یہ خود کھل جائے گا، اور اسے کوئی بائی پاس نہیں کر سکتا، ایڈمن بھی نہیں۔", "{m} 个会话已全部占用。有空位时会自动开放，任何人都无法绕过，管理员也不行。"],
+["Locked", "Bloke", "Bloqueado", "Terkunci", "Verrouillé", "Bloqueado", "लॉक", "لاک", "已锁定"],
+["The session limit applies to everyone, including premium and admins.", "Limit sesyon an valab pou tout moun, menm premium ak admin yo.", "O limite de sessões vale para todos, inclusive premium e admins.", "Batas sesi berlaku untuk semua orang, termasuk premium dan admin.", "La limite de sessions s’applique à tout le monde, premium et admins compris.", "El límite de sesiones se aplica a todos, incluidos premium y admins.", "सेशन सीमा सब पर लागू होती है, प्रीमियम और एडमिन पर भी।", "سیشن کی حد سب پر لاگو ہوتی ہے، پریمیم اور ایڈمن پر بھی۔", "会话上限对所有人生效，包括高级版和管理员。"]
+];
+const TR = {}; DICT.forEach(r => { TR[r[0]] = {}; COLS.forEach((c, i) => { TR[r[0]][c] = r[i + 1]; }); });
+let LANG = 'ht'; try { const q = new URLSearchParams(location.search).get('lang'); const s = LANGS[q] ? q : localStorage.getItem('diana_lang'); if (LANGS[s]) LANG = s; if (LANGS[q]) localStorage.setItem('diana_lang', q); } catch (e) {}
+let LBC = null; try { LBC = 'BroadcastChannel' in window ? new BroadcastChannel('diana_lang') : null; } catch (e) {}
+const t = k => { const e = TR[k]; return (LANG === 'en' || !e) ? k : (e[LANG] || k); };
+const tf = (k, p) => t(k).replace(/\{(\w+)\}/g, (m, x) => (p && x in p) ? p[x] : m);
+function trNode(n) {
+    const v = n.nodeValue, k = n.__o || v.trim();
+    if (!k || !TR[k]) return;
+    n.__o = k;
+    const out = t(k), nv = v.match(/^\s*/)[0] + out + v.match(/\s*$/)[0];
+    if (nv !== v) n.nodeValue = nv;
+}
+function trTree(root) {
+    if (root.nodeType === 3) return trNode(root);
+    if (root.nodeType !== 1 || /^(SCRIPT|STYLE)$/.test(root.tagName)) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n; while ((n = w.nextNode())) { if (!/^(SCRIPT|STYLE)$/.test(n.parentNode.tagName)) trNode(n); }
+    root.querySelectorAll && root.querySelectorAll('[placeholder]').forEach(el => {
+        const k = el.getAttribute('data-ph') || el.getAttribute('placeholder');
+        if (TR[k]) { el.setAttribute('data-ph', k); el.setAttribute('placeholder', t(k)); }
+    });
+}
+new MutationObserver(ms => ms.forEach(m => { if (m.type === 'characterData') trNode(m.target); else m.addedNodes.forEach(trTree); }))
+    .observe(document.body, { childList:true, subtree:true, characterData:true });
+function paintFlags() {
+    const f = $('flags');
+    f.innerHTML = Object.keys(LANGS).map(c => '<button type="button" data-l="' + c + '" class="' + (c === LANG ? 'on' : '') + '"><span>' + LANGS[c][0] + '</span>' + LANGS[c][1] + '</button>').join('');
+    const on = f.querySelector('.on'); if (on) try { f.scrollTo({ left: on.offsetLeft - 60, behavior:'smooth' }); } catch (e) {}
+}
+function applyLang() {
+    document.documentElement.lang = LANG;
+    trTree(document.body);
+    paintFlags();
+    try { paintPC(); } catch (e) {}
+    if (token && !$('panel').classList.contains('hide')) loadAll();
+}
+function setLang(c) { if (!LANGS[c] || c === LANG) return; LANG = c; try { localStorage.setItem('diana_lang', c); } catch (e) {} try { LBC && LBC.postMessage({ lang:c }); } catch (e) {} applyLang(); }
+if (LBC) LBC.onmessage = e => { const c = e.data && e.data.lang; if (LANGS[c] && c !== LANG) { LANG = c; applyLang(); } };
+document.addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (b) setLang(b.dataset.l); });
+window.addEventListener('storage', e => { if (e.key === 'diana_lang' && LANGS[e.newValue] && e.newValue !== LANG) { LANG = e.newValue; applyLang(); } });
+
+let verifiedSet = new Set(), adminSet = new Set();
+try { token = sessionStorage.getItem('premium_admin'); } catch (e) {}
+
+const post = async (path, body) => {
+    const r = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(Object.assign({ adminToken:token }, body)) });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401 && token) { token = null; try { sessionStorage.removeItem('premium_admin'); } catch (e) {} show(false); }
+    return Object.assign(d, { _ok:r.ok });
+};
+const toast = t => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2600); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const show = ok => { $('login').classList.toggle('hide', ok); $('panel').classList.toggle('hide', !ok); if (ok) loadAll(); };
+const badge = '<svg class="vb" aria-label="Verified"><use href="#vbadge"/></svg>';
+const cleanNum = v => String(v || '').replace(/[^0-9]/g, '');
+const fail = (el, msg) => { el.textContent = msg; el.style.display = 'block'; };
+
+async function login() {
+    const btn = $('loginBtn'); btn.disabled = true;
+    try {
+        const r = await fetch('/api/admin/verify', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ password:$('pw').value }) });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.token) {
+            token = d.token; try { sessionStorage.setItem('premium_admin', token); } catch (e) {}
+            $('pw').value = ''; $('loginErr').style.display = 'none'; show(true);
+        } else $('loginErr').style.display = 'block';
+    } catch (e) { toast(t('Server unreachable')); }
+    btn.disabled = false;
+}
+
+function left(p) {
+    if (!p.expires) return t('Forever');
+    const ms = p.expires - Date.now();
+    if (ms <= 0) return t('Expired');
+    const d = Math.floor(ms / 86400000);
+    return d ? tf('{n} days left', { n:d }) : tf('{n} hours left', { n:Math.max(1, Math.floor(ms / 3600000)) });
+}
+const tagsOf = p => '<div class="tags"><span class="tag"><i class="fas fa-terminal"></i> ' + t('Prefix') + ' <b>' + esc(p.prefix || '.') + '</b></span>' +
+    '<span class="tag"><i class="fas ' + (String(p.mode) === 'private' ? 'fa-lock' : 'fa-globe') + '"></i> ' + t('Mode') + ' <b>' + esc(String(p.mode || 'public')) + '</b></span>' +
+    (verifiedSet.has(p.number) ? '<span class="tag blue"><i class="fas fa-circle-check"></i> ' + t('Verified') + '</span>' : '') +
+    (adminSet.has(p.number) ? '<span class="tag amber"><i class="fas fa-user-shield"></i> ' + t('Admin') + '</span>' : '') + '</div>';
+const nameOf = n => '+' + esc(n) + (verifiedSet.has(n) ? badge : '');
+
+async function loadVerified() {
+    const d = await post('/api/verified/list'); if (!d._ok) return;
+    verifiedSet = new Set(d.list.map(x => x.number));
+    $('sVerified').textContent = d.list.length; $('vCount').textContent = d.list.length;
+    $('vList').innerHTML = d.list.length ? d.list.map(x =>
+        '<div class="row"><div class="ic"><svg class="vb"><use href="#vbadge"/></svg></div>' +
+        '<div class="inf"><div class="num">+' + esc(x.number) + badge + '</div><div class="sub"><span class="' + (x.online ? 'ok' : '') + '">' + t(x.online ? 'Online' : 'Offline') + '</span></div></div>' +
+        '<div class="acts"><button class="sq del" data-act="unverify" data-n="' + esc(x.number) + '" aria-label="Remove verification"><i class="fas fa-xmark"></i></button></div></div>').join('')
+        : '<div class="empty">' + t('No verified numbers yet.') + '</div>';
+}
+async function loadAdmins() {
+    const d = await post('/api/admins/list'); if (!d._ok) return;
+    adminSet = new Set(d.list.map(x => x.number));
+    $('sAdmins').textContent = d.list.length; $('aCount').textContent = d.list.length;
+    $('aList').innerHTML = d.list.length ? d.list.map(x =>
+        '<div class="row"><div class="ic gold"><i class="fas fa-user-shield"></i></div>' +
+        '<div class="inf"><div class="num">+' + esc(x.number) + (verifiedSet.has(x.number) ? badge : '') + '</div><div class="sub"><span class="' + (x.online ? 'ok' : '') + '">' + t(x.online ? 'Online' : 'Offline') + '</span></div></div>' +
+        '<div class="acts"><button class="sq del" data-act="rmadmin" data-n="' + esc(x.number) + '" aria-label="Remove admin"><i class="fas fa-trash"></i></button></div></div>').join('')
+        : '<div class="empty">' + t('No admin people yet.') + '</div>';
+}
+async function loadConnections() {
+    const d = await post('/api/premium/connections'); if (!d._ok) return;
+    $('connCount').textContent = (d.count || 0) + ' / ' + (d.max || 6);
+    $('netDot').classList.toggle('off', (d.count || 0) >= (d.max || 6));
+    capNow = { c:d.used != null ? d.used : (d.count || 0), m:d.max || 6 }; paintPC();
+    connCache = d.list || [];
+    $('connections').innerHTML = connCache.length ? connCache.map(p =>
+        '<div class="row clk" data-bot="' + esc(p.number) + '">' +
+        (p.avatar ? '<div class="ic thumb on" style="background-image:' + cssUrl(p.avatar) + '"></div>' : '<div class="ic on"><i class="fas fa-mobile-screen-button"></i></div>') +
+        '<div class="inf"><div class="num">' + nameOf(p.number) + '</div><div class="sub"><span class="ok">' + t('Connected') + '</span> · ' + t(p.premium ? 'Premium' : 'Standard') +
+        (p.groups == null ? '' : ' · ' + p.groups + ' ' + t('Groups')) + '</div>' + tagsOf(p) + qaBtns(p.number, qaState(p)) + '</div>' +
+        '<div class="acts"><span class="sq go"><i class="fas fa-chevron-right"></i></span></div></div>'
+    ).join('') : '<div class="empty">' + t('No connected numbers right now.') + '</div>';
+    if (BP.number) paintBotPage();
+}
+async function loadPremium() {
+    const d = await post('/api/premium/list'); if (!d._ok) return;
+    $('sTotal').textContent = d.list.length;
+    $('sActive').textContent = d.list.filter(p => p.active).length;
+    $('list').innerHTML = d.list.length ? d.list.map(p =>
+        '<div class="row"><div class="ic ' + (p.active ? 'gold' : 'off') + '"><i class="fas fa-crown"></i></div>' +
+        '<div class="inf"><div class="num">' + nameOf(p.number) + '</div><div class="sub">' + left(p) + ' · <span class="' + (p.online ? 'ok' : '') + '">' + t(p.online ? 'online' : 'offline') + '</span></div>' + tagsOf(p) + '</div>' +
+        '<div class="acts"><button class="sq v" data-act="' + (verifiedSet.has(p.number) ? 'unverify' : 'verify') + '" data-n="' + esc(p.number) + '" aria-label="Verify"><i class="fas fa-circle-check"></i></button>' +
+        '<button class="sq del" data-act="rmprem" data-n="' + esc(p.number) + '" aria-label="Remove"><i class="fas fa-trash"></i></button></div></div>').join('')
+        : '<div class="empty">' + t('No premium users yet.') + '</div>';
+}
+
+/* ---------- pairing control + other-server links ---------- */
+let closedNow = false, linksNow = [], capNow = { c:0, m:6 };
+function paintPC() {
+    const locked = capNow.c >= capNow.m, off = closedNow || locked;
+    $('pcCard').classList.toggle('closed', off);
+    $('pcIcon').className = 'fas ' + (off ? 'fa-lock' : 'fa-lock-open');
+    $('pcState').textContent = t(locked ? 'Locked' : closedNow ? 'CLOSED' : 'OPEN');
+    $('pcHead').textContent = t(locked ? 'Network locked' : closedNow ? 'Pairing is closed' : 'Pairing is open');
+    $('pcSub').textContent = locked ? tf('All {m} sessions are in use. It opens by itself when a slot is free, and nobody can bypass it, not even admins.', { m:capNow.m })
+        : t(closedNow ? 'Nobody can create a new session. Premium and admin numbers can still pair.' : 'Anyone can create a new session right now.');
+    $('pcBtn').firstElementChild.className = 'fas ' + (closedNow ? 'fa-lock-open' : 'fa-lock');
+    $('pcBtnTxt').textContent = t(closedNow ? 'Open pairing' : 'Close pairing');
+    $('pcCap').textContent = capNow.c + ' / ' + capNow.m;
+    const pct = Math.min(100, Math.round(capNow.c / Math.max(1, capNow.m) * 100)), f = $('pcFill');
+    f.style.width = Math.max(pct, capNow.c ? 6 : 0) + '%';
+    f.className = pct >= 100 ? 'full' : pct >= 60 ? 'mid' : '';
+    $('pcLinks').textContent = tf('{n} other servers shown to visitors', { n:linksNow.length });
+}
+async function loadSettings() {
+    const d = await post('/api/settings/get'); if (!d._ok) return;
+    closedNow = !!d.pairingClosed; linksNow = d.links || []; if (d.max) capNow.m = d.max;
+    paintPC();
+    $('lkCount').textContent = linksNow.length;
+    $('lkList').innerHTML = linksNow.length ? linksNow.map((l, i) =>
+        '<div class="row">' + (l.img ? '<div class="ic thumb" style="background-image:' + cssUrl(l.img) + '"></div>' : '<div class="ic"><i class="fas fa-server"></i></div>') + '<div class="inf"><div class="num">' + esc(l.name) + '</div><div class="sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(l.url) + '</div></div>' +
+        '<div class="acts"><button class="sq del" data-lk="' + i + '" aria-label="Remove"><i class="fas fa-trash"></i></button></div></div>').join('')
+        : '<div class="empty">' + t('No other server yet.') + '</div>';
+}
+async function saveSettings(body, okMsg) {
+    const d = await post('/api/settings/save', body);
+    if (d._ok) { toast(t(okMsg)); loadSettings(); } else toast(d.error || t('Failed'));
+    return d;
+}
+$('pcBtn').onclick = async () => {
+    const b = $('pcBtn'); b.disabled = true;
+    await saveSettings({ pairingClosed: !closedNow }, closedNow ? 'Pairing opened ✓' : 'Pairing closed ✓');
+    b.disabled = false;
+};
+$('lkBtn').onclick = async () => {
+    const err = $('lkErr'); err.style.display = 'none';
+    const url = $('lkUrl').value.trim(), img = $('lkImg').value.trim(), name = $('lkName').value.trim() || ('Server ' + (linksNow.length + 2));
+    if (!/^https?:\/\/\S+$/i.test(url) || (img && !/^https?:\/\/\S+$/i.test(img))) return fail(err, t('Enter a full link starting with https://'));
+    const d = await saveSettings({ links: linksNow.concat([{ name, url, img }]) }, 'Link added ✓');
+    if (d._ok) { $('lkUrl').value = ''; $('lkName').value = ''; $('lkImg').value = ''; prevLink(); }
+};
+
+
+/* ---------- one bot page : its groups and their invite links (admin only) ---------- */
+const BP = { number:null, groups:[] };
+let connCache = [];
+const cssUrl = u => "url('" + String(u).replace(/["'()\\\s]/g, c => encodeURIComponent(c)) + "')";
+const durTxt = ms => { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60; return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm'; };
+const hsh = x => [...String(x)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const COVER = 'https://url.bmbxmd.workers.dev/O3BUG.jpg';
+function paintBotPage() {
+    const p = connCache.find(x => x.number === BP.number), on = !!p;
+    const h = hsh(BP.number);
+    $('bpCov').style.cssText = 'background-image:url(' + COVER + ');background-size:' + (150 + h % 45) + '%;background-position:' + (10 + h % 80) + '% ' + (10 + (h >> 5) % 80) + '%';
+    $('bpImg').src = (p && p.avatar) || COVER; $('bpImg').onerror = function () { this.onerror = null; this.src = COVER; };
+    $('bpDot').className = on ? '' : 'off';
+    $('bpName').textContent = (p && p.name) || '+' + BP.number;
+    $('bpNum').textContent = '+' + BP.number;
+    $('bpTags').innerHTML = p ? tagsOf(p) : '<span class="tag">' + t('Offline') + '</span>';
+    $('bpQA').innerHTML = p ? qaBtns(p.number, qaState(p)) : '';
+    $('bpUp').textContent = p && p.connectedAt ? durTxt(Date.now() - p.connectedAt) : '--';
+    $('bpMode').textContent = p ? p.mode : '--';
+    $('bpGroups').textContent = BP.groups.length || (p && p.groups != null ? p.groups : '--');
+}
+function openBotPage(number, push) {
+    BP.number = number; BP.groups = [];
+    $('panel').classList.add('hide'); $('botPage').classList.remove('hide');
+    paintBotPage();
+    $('bpList').innerHTML = '<div class="empty">' + t('Loading groups…') + '</div>';
+    if (push !== false) history.pushState({ bot:number }, '', '#bot' + number);
+    window.scrollTo({ top:0 });
+    loadBotGroups(false);
+}
+function closeBotPage(fromPop) {
+    BP.number = null; $('botPage').classList.add('hide'); $('panel').classList.remove('hide');
+    if (!fromPop && location.hash.indexOf('#bot') === 0) history.back();
+}
+window.addEventListener('popstate', () => { if (BP.number && location.hash.indexOf('#bot') !== 0) closeBotPage(true); });
+const groupRow = g => '<div class="grow" data-g="' + esc(g.id) + '"><div class="gic"><i class="fas fa-users"></i></div>' +
+    '<div class="inf"><div class="num">' + esc(g.name) + '</div><div class="sub">' + tf('{n} members', { n:g.size }) +
+    (g.botAdmin ? ' · <span class="ok"><i class="fas fa-shield-halved"></i> ' + t('Bot admin') + '</span>' : ' · <span class="lock"><i class="fas fa-lock"></i></span>') + '</div>' +
+    '</div>' +
+    '<button type="button" class="gbtn" data-gl="' + esc(g.id) + '"' + (g.botAdmin ? '' : ' disabled title="' + esc(t('Group link is only available when the bot is admin.')) + '"') + '><i class="fas fa-link"></i> ' + t('Get link') + '</button>' +
+    '<div class="glink hide"><input readonly><button type="button" data-copy aria-label="Copy"><i class="fas fa-copy"></i></button><a target="_blank" rel="noopener noreferrer" aria-label="Open"><i class="fas fa-arrow-up-right-from-square"></i></a></div>' + '</div>';
+async function loadBotGroups(fresh) {
+    if (!BP.number) return;
+    const number = BP.number, d = await post('/api/premium/bot-groups', { number, fresh:!!fresh });
+    if (number !== BP.number) return;
+    if (!d._ok) { $('bpList').innerHTML = '<div class="empty">' + t('Could not load groups.') + '</div>'; return; }
+    BP.groups = d.list;
+    $('bpList').innerHTML = d.list.length ? d.list.map(groupRow).join('') : '<div class="empty">' + t('No groups found.') + '</div>';
+    paintBotPage();
+}
+$('bpBack').onclick = () => closeBotPage(false);
+$('bpRefresh').onclick = () => { $('bpList').innerHTML = '<div class="empty">' + t('Loading groups…') + '</div>'; loadBotGroups(true); };
+$('connections').addEventListener('click', e => { if (e.target.closest('[data-qa]')) return; const r = e.target.closest('[data-bot]'); if (r) openBotPage(r.dataset.bot); });
+$('bpList').addEventListener('click', async e => {
+    const c = e.target.closest('[data-copy]');
+    if (c) {
+        const inp = c.parentNode.querySelector('input');
+        try { await navigator.clipboard.writeText(inp.value); toast(t('Link copied ✓')); }
+        catch (x) { inp.select(); try { document.execCommand('copy'); toast(t('Link copied ✓')); } catch (y) { toast(t('Unable to copy.')); } }
+        return;
+    }
+    const b = e.target.closest('[data-gl]'); if (!b || b.disabled) return;
+    const row = b.closest('.grow'), box = row.querySelector('.glink');
+    b.disabled = true;
+    const d = await post('/api/premium/group-link', { number:BP.number, jid:b.dataset.gl });
+    b.disabled = false;
+    if (!d._ok) return toast(t(d.error || 'Failed.'));
+    box.classList.remove('hide'); box.querySelector('input').value = d.link; box.querySelector('a').href = d.link;
+    b.innerHTML = '<i class="fas fa-rotate"></i> ' + t('Refresh');
+});
+/* live preview of the server image while typing */
+function prevLink() {
+    const u = $('lkImg').value.trim(), ok = /^https?:\/\/\S+$/i.test(u);
+    $('lkPrev').classList.toggle('hide', !ok);
+    if (ok) { $('lkPrevImg').style.backgroundImage = cssUrl(u); $('lkPrevName').textContent = $('lkName').value.trim() || 'Server'; }
+}
+$('lkImg').addEventListener('input', prevLink); $('lkName').addEventListener('input', prevLink);
+
+document.addEventListener('click', e => {
+    const lk = e.target.closest('[data-lk]');
+    if (lk) { const l = linksNow.slice(); l.splice(Number(lk.dataset.lk), 1); saveSettings({ links: l }, 'Link removed'); }
+});
+
+
+/* ---------- quick buttons on every connected number ---------- */
+const qaBtns = (number, st) => '<div class="qa">' +
+    '<button type="button" class="qb prem' + (st.prem ? ' on' : '') + '" data-qa="prem" data-n="' + esc(number) + '" data-on="' + (st.prem ? 1 : 0) + '"><i class="fas fa-crown"></i> ' + t('Premium') + '</button>' +
+    '<button type="button" class="qb ver' + (st.ver ? ' on' : '') + '" data-qa="ver" data-n="' + esc(number) + '" data-on="' + (st.ver ? 1 : 0) + '"><i class="fas fa-circle-check"></i> ' + t('Verify') + '</button>' +
+    '<button type="button" class="qb adm' + (st.adm ? ' on' : '') + '" data-qa="adm" data-n="' + esc(number) + '" data-on="' + (st.adm ? 1 : 0) + '"><i class="fas fa-user-shield"></i> ' + t('Admin') + '</button></div>';
+const qaState = p => ({ prem:!!p.premium, ver:verifiedSet.has(p.number), adm:adminSet.has(p.number) });
+document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-qa]'); if (!b) return;
+    const n = b.dataset.n, on = b.dataset.on === '1', k = b.dataset.qa;
+    const map = {
+        prem:[['/api/premium/add', 'Premium added ✓', { days }], ['/api/premium/remove', 'Premium removed']],
+        ver:[['/api/verified/add', 'Verified ✓'], ['/api/verified/remove', 'Verification removed']],
+        adm:[['/api/admins/add', 'Admin added ✓'], ['/api/admins/remove', 'Admin removed']]
+    };
+    const [path, msg, extra] = map[k][on ? 1 : 0];
+    if (on && k === 'prem' && !confirm(tf('Remove premium from +{n}?', { n }))) return;
+    if (on && k === 'adm' && !confirm(tf('Remove admin +{n}?', { n }))) return;
+    b.disabled = true;
+    const d = await post(path, Object.assign({ number:n }, extra || {}));
+    b.disabled = false;
+    if (d._ok) { toast(t(msg)); loadAll(); } else toast(t(d.error || 'Failed.'));
+});
+
+async function loadAll() {
+    $('liveDot').classList.remove('off');
+    try {
+        await Promise.all([loadVerified(), loadAdmins()]);
+        await Promise.all([loadPremium(), loadConnections(), loadSettings()]);
+    } catch (e) { $('liveDot').classList.add('off'); }
+}
+
+$('loginBtn').onclick = login;
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+$('plans').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    days = Number(b.dataset.d);
+    document.querySelectorAll('#plans button').forEach(x => x.classList.toggle('on', x === b));
+});
+
+async function addNumber(inputId, errId, path, extra, okMsg) {
+    const err = $(errId); err.style.display = 'none';
+    const number = cleanNum($(inputId).value);
+    if (number.length < 8) return fail(err, t('Enter a valid WhatsApp number.'));
+    const d = await post(path, Object.assign({ number }, extra || {}));
+    if (d._ok) { $(inputId).value = ''; toast(t(okMsg)); loadAll(); }
+    else fail(err, d.error || t('Failed.'));
+}
+$('addBtn').onclick = () => addNumber('num', 'addErr', '/api/premium/add', { days }, 'Premium added ✓');
+$('vBtn').onclick = () => addNumber('vNum', 'vErr', '/api/verified/add', null, 'Verified ✓');
+$('aBtn').onclick = () => addNumber('aNum', 'aErr', '/api/admins/add', null, 'Admin added ✓');
+
+document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const n = b.dataset.n, act = b.dataset.act;
+    const map = { verify:['/api/verified/add', 'Verified ✓'], unverify:['/api/verified/remove', 'Verification removed'],
+                  rmadmin:['/api/admins/remove', 'Admin removed'], rmprem:['/api/premium/remove', 'Premium removed'] };
+    const [path, msg] = map[act] || [];
+    if (!path) return;
+    if (act === 'rmprem' && !confirm(tf('Remove premium from +{n}?', { n }))) return;
+    if (act === 'rmadmin' && !confirm(tf('Remove admin +{n}?', { n }))) return;
+    const d = await post(path, { number:n });
+    if (d._ok) { toast(t(msg)); loadAll(); }
+});
+
+applyLang();
+if (token) show(true);
+window.addEventListener('load', () => setTimeout(() => { const m = /^#bot(\d+)$/.exec(location.hash); if (m && token) openBotPage(m[1], false); }, 900));
+setInterval(() => { if (token && !$('panel').classList.contains('hide') && !document.hidden) loadAll(); }, 10000);
+</script>
+
+
+</body></html>
