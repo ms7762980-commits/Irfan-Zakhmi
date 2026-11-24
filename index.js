@@ -3,7 +3,6 @@ const pino = require('pino');
 const express = require('express');
 const http = require('http');
 const { Boom } = require('@hapi/boom');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,86 +11,52 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Modern & Clean English Web Pairing Panel with Copy Button
+// Modern & Clean Web Pairing Panel
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="ur" dir="rtl">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Shahzad Zakhmi - Official Pairing Panel</title>
+            <title>شہزاد زخمی - Official Pairing Panel</title>
             <style>
                 body { background-color: #05050a; color: #fff; font-family: sans-serif; text-align: center; padding: 30px; margin: 0; }
                 .container { background: #121826; border: 1px solid #1f293d; padding: 35px 25px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 100%; max-width: 420px; box-sizing: border-box; }
                 h2 { color: #34d399; margin-bottom: 5px; font-size: 24px; }
                 .sub-title { color: #9ca3af; font-size: 14px; margin-bottom: 25px; }
-                .info-box { background: #1f293d; padding: 12px; border-radius: 10px; font-size: 12px; color: #d1d5db; margin-bottom: 20px; text-align: left; border-left: 4px solid #10b981; }
-                label { display: block; text-align: left; font-size: 13px; color: #9ca3af; margin-bottom: 5px; }
-                input { padding: 14px; width: 100%; margin-bottom: 15px; border-radius: 10px; border: 1px solid #374151; background: #0b0f19; color: #fff; font-size: 16px; box-sizing: border-box; outline: none; }
-                button { background: #10b981; color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
-                button:hover { background: #059669; }
-                #code-container { margin-top: 20px; display: none; }
-                #code { font-size: 20px; color: #34d399; font-weight: bold; background: #0b0f19; padding: 14px; border-radius: 10px; border: 1px dashed #10b981; word-break: break-all; margin-bottom: 10px; letter-spacing: 2px; }
-                .copy-btn { background: #3b82f6; margin-top: 5px; }
-                .copy-btn:hover { background: #2563eb; }
+                input { padding: 14px; width: 100%; margin: 10px 0; border-radius: 10px; border: 1px solid #374151; background: #0b0f19; color: #fff; font-size: 16px; text-align: center; box-sizing: border-box; outline: none; }
+                button { background: #10b981; color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
+                #code { margin-top: 25px; font-size: 22px; color: #34d399; font-weight: bold; background: #0b0f19; padding: 15px; border-radius: 10px; border: 1px dashed #10b981; word-break: break-all; }
                 .footer { margin-top: 20px; font-size: 12px; color: #6b7280; }
             </style>
         </head>
         <body>
             <div class="container">
-                <h2>⚡ Shahzad Zakhmi 007 ⚡</h2>
+                <h2>⚡ شہزاد زخمی 007 ⚡</h2>
                 <div class="sub-title">Official Pairing Panel (Optimized)</div>
-                
-                <div class="info-box">
-                    <strong>Quick Setup:</strong> Enter your WhatsApp number with country code below to instantly generate your pairing code!
-                </div>
-
-                <label>WhatsApp Number</label>
+                <p style="font-size: 14px; color: #d1d5db;">اپنا واٹس ایپ نمبر کنٹری کوڈ کے ساتھ درج کریں:</p>
                 <input type="text" id="phone" value="923256326517" placeholder="e.g. 923256326517">
-                
-                <button onclick="getPairingCode()" id="gen-btn">Generate Pairing Code</button>
-                
-                <div id="code-container">
-                    <div id="code"><span>-------</span></div>
-                    <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
-                </div>
-                
-                <div class="footer">Powered by Shahzad Zakhmi 007</div>
+                <button onclick="getPairingCode()">Generate Pairing Code</button>
+                <div id="code"><span>کوڈ یہاں شو ہوگا</span></div>
+                <div class="footer">Powered by شہزاد زخمی 007</div>
             </div>
             <script>
                 async function getPairingCode() {
                     const phone = document.getElementById('phone').value;
-                    if(!phone) { alert('Please enter your WhatsApp number!'); return; }
-                    const btn = document.getElementById('gen-btn');
-                    btn.innerText = 'Generating Code...';
-                    btn.disabled = true;
-                    
+                    if(!phone) { alert('براہ کرم نمبر درج کریں!'); return; }
+                    document.getElementById('code').innerHTML = 'کوڈ حاصل ہو رہا ہے...';
                     try {
                         const res = await fetch('/pair?phone=' + phone);
                         const data = await res.json();
                         if(data.code) {
-                            document.getElementById('code').innerText = data.code;
-                            document.getElementById('code-container').style.display = 'block';
-                            btn.innerText = 'Generate Pairing Code';
-                            btn.disabled = false;
+                            document.getElementById('code').innerHTML = data.code;
                         } else {
-                            alert(data.error || 'Failed to generate code. Try again.');
-                            btn.innerText = 'Generate Pairing Code';
-                            btn.disabled = false;
+                            document.getElementById('code').innerHTML = data.error || 'خرابی: دُوبارہ کوشش کریں';
                         }
                     } catch(e) {
-                        alert('Connection error! Please refresh and try again.');
-                        btn.innerText = 'Generate Pairing Code';
-                        btn.disabled = false;
+                        document.getElementById('code').innerHTML = 'کنکشن کا مسئلہ!';
                     }
-                }
-
-                function copyCode() {
-                    const codeText = document.getElementById('code').innerText;
-                    navigator.clipboard.writeText(codeText).then(() => {
-                        alert('Pairing code copied to clipboard!');
-                    });
                 }
             </script>
         </body>
@@ -99,49 +64,28 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Robust Dynamic Pairing Endpoint (Guaranteed Pairing Code Generation)
+let globalSock = null;
+
 app.get('/pair', async (req, res) => {
-    const phoneNumber = req.query.phone;
+    let phoneNumber = req.query.phone;
     if (!phoneNumber) return res.json({ error: 'Phone number is required' });
     
-    const authFolder = './temp_auth_' + Date.now();
+    // Clean phone number (remove +, spaces, dashes)
+    phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
     
     try {
-        const { state, saveCreds } = await useMultiFileAuthState(authFolder);
-        const { version } = await fetchLatestBaileysVersion();
-
-        const sock = makeWASocket({
-            version,
-            logger: pino({ level: 'silent' }),
-            auth: state,
-            printQRInTerminal: false,
-            browser: Browsers.macOS("Chrome")
-        });
-
-        sock.ev.on('creds.update', saveCreds);
-
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        let code = await sock.requestPairingCode(phoneNumber);
+        if (!globalSock) {
+            return res.json({ error: 'بوٹ شروع ہو رہا ہے، 5 سیکنڈ بعد کوشش کریں۔' });
+        }
+        if (globalSock.authState.creds.registered) {
+            return res.json({ error: 'بوٹ پہلے سے کنیکٹ ہے!' });
+        }
+        
+        let code = await globalSock.requestPairingCode(phoneNumber);
         code = code?.match(/.{1,4}/g)?.join("-") || code;
-
-        // Cleanup temp folder after 1 minute
-        setTimeout(() => {
-            try {
-                if (fs.existsSync(authFolder)) {
-                    fs.rmSync(authFolder, { recursive: true, force: true });
-                }
-            } catch(e) {}
-        }, 60000);
-
         return res.json({ code });
     } catch (err) {
-        try {
-            if (fs.existsSync(authFolder)) {
-                fs.rmSync(authFolder, { recursive: true, force: true });
-            }
-        } catch(e) {}
-        return res.json({ error: err.message || 'Failed to generate pairing code.' });
+        return res.json({ error: err.message || 'کوڈ جنरेट کرنے میں خرابی ہوئی۔' });
     }
 });
 
@@ -153,8 +97,11 @@ async function startBot() {
         version,
         logger: pino({ level: 'silent' }),
         auth: state,
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        browser: Browsers.macOS("Chrome")
     });
+
+    globalSock = sock;
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
@@ -164,13 +111,13 @@ async function startBot() {
                 setTimeout(() => startBot(), 3000);
             }
         } else if (connection === 'open') {
-            console.log('✅ Shahzad Zakhmi Bot Connected Successfully!');
+            console.log('✅ شہزاد زخمی Bot Connected Successfully!');
         }
     });
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Optimized Menu & Command Handler with all 500+ commands
+    // Optimized Menu & Command Handler
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const m = messages[0];
         if (!m.message) return;
@@ -196,833 +143,98 @@ async function startBot() {
 
 ━━━〔 ✦سسٹم انفو✦ 〕━━━
 │ 🤖 ʙᴏᴛ ɴᴀᴍᴇ : شہزاد زخمی 007
-│ 👤 ᴏᴡɴᴇʀ : شہزاد زخمی (923256326517)
-│ 📜 ᴄᴍᴅs   : ~500 (All Loaded)
+│ 👤 ᴏᴡɴᴇْر : شہزاد زخمی (923256326517)
+│ 📜 ᴄᴍᴅs   : ~500 (Optimized)
 │ 🌐 ᴍᴏᴅᴇ : public
 │ 🟢 sᴛᴀᴛᴜs : ACTIVE 
 ──────────────
 
-╭━━━━〔 🌸 *ɪsʟᴀᴍɪᴄ* 🌸 〕━━━━⬣
-┃ 💗 adhan
-┃ 💗 namaz_times
-┃ 💗 dua_morning
-┃ 💗 dua_evening
-┃ 💗 dua_sleep
-┃ 💗 dua_wakeup
-┃ 💗 dua_eating
-┃ 💗 dua_travel
-┃ 💗 dua_rain
-┃ 💗 dua_anxiety
-┃ 💗 dua_distress
-┃ 💗 dua_hajat
-┃ 💗 dua_forgiveness
-┃ 💗 dua_rizq
-┃ 💗 dua_guidance
-┃ 💗 dua_health
-┃ 💗 zikr_la_hawla
-┃ 💗 zikr_subhanallahi_wabihamdihi
-┃ 💗 zikr_subhanallahil_azeem
-┃ 💗 zikr_1000
-┃ 💗 zikr_astaghfirullah
-┃ 💗 zikr_alhamdulillah
-┃ 💗 zikr_subhanallah
-┃ 💗 zikr_allahuakbar
-┃ 💗 zikr_lailahailallah
-┃ 💗 zikr_lahawla
-┃ 💗 surah_fatiha
-┃ 💗 surah_falaq
-┃ 💗 surah_nas
-┃ 💗 surah_kafirun
-┃ 💗 surah_asr
-┃ 💗 surah_kauthar
-┃ 💗 ayatul_kursi
-┃ 💗 surah_yaseen
-┃ 💗 surah_rahman
-┃ 💗 surah_mulk
-┃ 💗 hadith_good_morals
-┃ 💗 hadith_cleanliness
-┃ 💗 hadith_truth
-┃ 💗 hadith_patience
-┃ 💗 darood_sharif
-┃ 💗 kalima_tayyiba
-┃ 💗 islam_fact
-┃ 💗 quran_reminder
-┃ 💗 pillars_islam
-┃ 💗 pillars_iman
-┃ 💗 islamic_months
-┃ 💗 ramadan_info
-┃ 💗 hajj_info
-┃ 💗 wudu_steps
-┃ 💗 namaz_steps
-┃ 💗 jummah_info
-┃ 💗 eid_info
-┃ 💗 shab_e_qadr
-┃ 💗 shab_e_barat
-┃ 💗 darood_nariya
-┃ 💗 darood_shaafi
-┃ 💗 darood_mahabbat
-┃ 💗 darood_ghausia
-┃ 💗 tahajjud
-┃ 💗 ishraq
-┃ 💗 chast
-┃ 💗 ayat_protection
-┃ 💗 ruqya
-┃ 💗 islam_quiz
-┃ 💗 quran_info
-┃ 💗 akhlaq
-┃ 💗 parents_dua
-┃ 💗 neighbor_rights
-┃ 💗 sehri_dua
-┃ 💗 iftar_dua
-┃ 💗 ramadan_dua
-┃ 💗 hasbunallah
-┃ 💗 bismillah
-┃ 💗 inshaallah
-┃ 💗 mashaallah
-┃ 💗 alhamdulillah
-┃ 💗 subhanallah
-┃ 💗 allahuakbar
-┃ 💗 lailahailallah
-┃ 💗 astaghfirullah
-┃ 💗 islamic_quote
-┃ 💗 prophet_story
-┃ 💗 sahabis_story
-┃ 💗 dua_exam
-┃ 💗 dua_kamyabi
-┃ 💗 dua_marriage
-┃ 💗 dua_children
-┃ 💗 dua_health_shifa
-┃ 💗 dua_debt
-┃ 💗 dua_enemy
-┃ 💗 dua_majlis
-┃ 💗 dua_khatm
-┃ 💗 dua_general
-┃ 💗 prophetnames
-┃ 💗 allahnames
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ اسلامی مینو ✦ 〕━━━
+│ • adhan
+│ • namaz_times
+│ • dua_morning
+│ • dua_evening
+│ • ayatul_kursi
+│ • surah_yaseen
+│ • surah_rahman
+│ • surah_mulk
+│ • darood_sharif
+│ • kalima_tayyiba
+│ • quran_reminder
+─────────────
 
-╭━━━━〔 🌸 *ᴅᴏᴡɴʟᴏᴀᴅ* 🌸 〕━━━━⬣
-┃ 💗 islamic
-┃ 💗 testicker
-┃ 💗 apk
-┃ 💗 capcut
-┃ 💗 drama
-┃ 💗 fb
-┃ 💗 igdl
-┃ 💗 igdl2
-┃ 💗 igdl3
-┃ 💗 mediafire
-┃ 💗 megadl
-┃ 💗 pinterest
-┃ 💗 ttmp3
-┃ 💗 igmp3
-┃ 💗 tiktok
-┃ 💗 tiktok2
-┃ 💗 tiktok3
-┃ 💗 ytpost
-┃ 💗 drama
-┃ 💗 gitclone
-┃ 💗 naat
-┃ 💗 pinvideo
-┃ 💗 play
-┃ 💗 video
-┃ 💗 play2
-┃ 💗 tsticker
-┃ 💗 tiktoksearch
-┃ 💗 tiktoksearch2
-┃ 💗 tts
-┃ 💗 video
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ ڈاؤن لوڈ مینو ✦ 〕━━━
+│ • play
+│ • video
+│ • tiktok
+│ • facebook
+│ • instagram
+│ • mediafire
+│ • pinterest
+│ • naat
+│ • tts
+─────────────
 
-╭━━━━〔 🌸 *ᴍɪsᴄ* 🌸 〕━━━━⬣
-┃ 💗 report
-┃ 💗 afk
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ اونر / VV مینو ✦ 〕━━━
+│ • vv
+│ • vv2
+│ • vv3
+│ • tochannel
+│ • chjid
+│ • fullpp
+│ • status
+│ • pair
+│ • forward
+─────────────
 
-╭━━━━〔 🌸 *ᴀɪ* 🌸 〕━━━━⬣
-┃ 💗 copilot
-┃ 💗 chatgptelite
-┃ 💗 talkai
-┃ 💗 brain
-┃ 💗 elite
-┃ 💗 mscopilot
-┃ 💗 elitegpt
-┃ 💗 assistant
-┃ 💗 smart
-┃ 💗 genius
-┃ 💗 proai
-┃ 💗 elitecopilot
-┃ 💗 ultra
-┃ 💗 maxai
-┃ 💗 nova
-┃ 💗 zenith
-┃ 💗 apex
-┃ 💗 vertex
-┃ 💗 pulse
-┃ 💗 quantum
-┃ 💗 neo
-┃ 💗 omega
-┃ 💗 gpt
-┃ 💗 gpt4
-┃ 💗 gpt4o
-┃ 💗 chatgpt
-┃ 💗 claude
-┃ 💗 gemini
-┃ 💗 kimi
-┃ 💗 perplexity
-┃ 💗 llama2
-┃ 💗 llama3
-┃ 💗 mistral
-┃ 💗 mixtral
-┃ 💗 falcon
-┃ 💗 bloom
-┃ 💗 orca
-┃ 💗 vicuna
-┃ 💗 alpaca
-┃ 💗 phi2
-┃ 💗 wizard
-┃ 💗 codet5
-┃ 💗 starlin
-┃ 💗 deepseek
-┃ 💗 deepseekcoder
-┃ 💗 yi
-┃ 💗 yi34b
-┃ 💗 qwen
-┃ 💗 command
-┃ 💗 jurassic
-┃ 💗 ai21
-┃ 💗 solar
-┃ 💗 lumin
-┃ 💗 grokbeta
-┃ 💗 bard
-┃ 💗 redpajama
-┃ 💗 dolly
-┃ 💗 codex
-┃ 💗 hugging
-┃ 💗 openassist
-┃ 💗 gptneo
-┃ 💗 gptj
-┃ 💗 bloomz
-┃ 💗 flant5
-┃ 💗 codegen
-┃ 💗 starcoder
-┃ 💗 gpt3
-┃ 💗 chatgptplus
-┃ 💗 gpt4turbo
-┃ 💗 claudeinstant
-┃ 💗 claude2
-┃ 💗 palm2
-┃ 💗 mathgpt
-┃ º┃ 💗 grammar
-┃ 💗 ai
-┃ 💗 adeel
-┃ 💗 aivideo
-┃ 💗 gpt
-┃ 💗 imagine
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ AI مینو ✦ 〕━━━
+│ • chatgpt
+│ • gemini
+│ • deepseek
+│ • copilot
+│ • grok
+│ • claude
+│ • gpt4
+─────────────
 
-╭━━━━〔 🌸 *ᴀɪ-ᴘʀᴏ* 🌸 〕━━━━⬣
-┃ 💗 deepseekpro
-┃ 💗 geminipro
-┃ 💗 chatgptpro
-┃ 💗 grokpro
-┃ 💗 claudepro
-┃ 💗 llamapro
-┃ 💗 mistralpro
-┃ 💗 copro
-┃ 💗 perplexitypro
-┃ 💗 kimipro
-┃ 💗 qwenpro
-┃ 💗 yipro
-┃ 💗 bardpro
-┃ 💗 mixtralpro
-┃ 💗 falconpro
-┃ º┃ 💗 vicunapro
-┃ 💗 orcapro
-┃ 💗 wizardpro
-┃ 💗 solarpro
-┃ 💗 neopro
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ گروپس مینو ✦ 〕━━━
+│ • antilink
+│ • antidelete
+│ • tagall
+│ • kick
+│ • mute
+│ • promote
+│ • demote
+│ • hidetag
+│ • poll
+─────────────
 
-╭━━━━〔 🌸 *ᴀɴɪᴍᴇ* 🌸 〕━━━━⬣
-┃ 💗 animecouple1 to animecouple25
-┃ 💗 animegirl1 to animegirl22
-┃ 💗 animewallpaper1 to animewallpaper20
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ ٹولز اور یوٹیلیٹی ✦ 〕━━━
+│ • sticker
+│ • testicker
+│ • removebg
+│ • remini
+│ • upscale
+│ • ping
+│ • owner
+│ • weather
+│ • calculate
+─────────────
 
-╭━━━━〔 🌸 *ᴏᴡɴᴇʀ* 🌸 〕━━━━⬣
-┃ 💗 vv
-┃ 💗 vv2
-┃ 💗 vv3
-┃ 💗 tochannel
-┃ 💗 chjid
-┃ 💗 fullpp
-┃ 💗 leave
-┃ 💗 ik
-┃ 💗 block
-┃ 💗 unblock
-┃ 💗 msg
-┃ 💗 status
-┃ 💗 pair
-┃ 💗 notify
-┃ 💗 forward
-┃ 💗 countx
-┃ º┃ 💗 count
-┃ 💗 update
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ɢʀᴏᴜᴘ* 🌸 〕━━━━⬣
-┃ 💗 antibot
-┃ 💗 botlist
-┃ 💗 kickbot
-┃ 💗 antibothelp
-┃ 💗 delete
-┃ 💗 dismissall
-┃ 💗 delgcstatus
-┃ º┃ 💗 unmute
-┃ 💗 mute
-┃ 💗 tagall
-┃ 💗 kick
-┃ 💗 promote
-┃ 💗 demote
-┃ 💗 gcpp
-┃ 💗 revoke
-┃ 💗 link
-┃ 💗 ginfo
-┃ 💗 updategdesc
-┃ 💗 updategname
-┃ 💗 poll
-┃ 💗 out
-┃ º┃ 💗 newgc
-┃ 💗 end
-┃ 💗 join
-┃ 💗 invite
-┃ 💗 acceptall
-┃ 💗 rejectall
-┃ 💗 requests
-┃ 💗 accept
-┃ 💗 reject
-┃ 💗 add
-┃ 💗 gcstatus
-┃ 💗 hidetag
-┃ 💗 chreact
-┃ 💗 vote
-┃ 💗 tagadmins
-┃ 💗 broadcast
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴜᴛɪʟɪᴛʏ* 🌸 〕━━━━⬣
-┃ 💗 boom
-┃ 💗 uptime
-┃ 💗 weather
-┃ 💗 convert
-┃ 💗 cpp
-┃ 💗 simdata
-┃ 💗 raw
-┃ º┃ 💗 define
-┃ 💗 getimage
-┃ 💗 news
-┃ 💗 id
-┃ 💗 lid
-┃ 💗 movieinfo
-┃ 💗 find
-┃ 💗 praytime
-┃ 💗 caption
-┃ 💗 rw
-┃ 💗 playstore
-┃ 💗 ss
-┃ 💗 countryinfo
-┃ 💗 getlid
-┃ 💗 rcolor
-┃ 💗 binary
-┃ 💗 dbinary
-┃ 💗 base64
-┃ º┃ 💗 unbase64
-┃ 💗 urlencode
-┃ 💗 urldecode
-┃ 💗 timenow
-┃ 💗 date
-┃ 💗 calculate
-┃ º┃ 💗 person
-┃ 💗 readmore
-┃ 💗 tempmail
-┃ 💗 checkmail
-┃ 💗 wikipedia
-┃ 💗 wstalk
-┃ 💗 url
-┃ 💗 videourl
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ʙᴏʏᴅᴘ* 🌸 〕━━━━⬣
-┃ 💗 boydp1 to boydp22
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ғᴜɴ* 🌸 〕━━━━⬣
-┃ 💗 character
-┃ 💗 ringtone
-┃ 💗 rain
-┃ 💗 fight
-┃ 💗 puzzle
-┃ 💗 story
-┃ 💗 transform
-┃ 💗 dance
-┃ 💗 race
-┃ 💗 weathercast
-┃ 💗 emojimenu
-┃ 💗 muth
-┃ 💗 compatibility
-┃ 💗 aura
-┃ 💗 roast
-┃ 💗 8ball
-┃ 💗 compliment
-┃ 💗 lovetest
-┃ 💗 emoji
-┃ 💗 fakevote
-┃ 💗 livevote
-┃ 💗 fakesubs
-┃ 💗 welcomevote
-┃ 💗 membergrowth
-┃ 💗 fakepoll
-┃ 💗 votelist
-┃ 💗 quote
-┃ 💗 flirt
-┃ 💗 🖕
-┃ 💗 akela
-┃ 💗 bewafa
-┃ 💗 chakkar
-┃ 💗 ullubana
-┃ 💗 taalibajao
-┃ 💗 neendurai
-┃ 💗 chatpata
-┃ º┃ 💗 waitingroom
-┃ 💗 taj
-┃ 💗 lafangaa
-┃ 💗 chocolatewala
-┃ 💗 baatkaatna
-┃ 💗 palat
-┃ 💗 gaanasunao
-┃ 💗 haaththamna
-┃ 💗 chuprahna
-┃ 💗 phoolonkahaar
-┃ 💗 ghoordekhna
-┃ º┃ 💗 bahaana
-┃ 💗 tarkeeb
-┃ 💗 hassichhupa
-┃ 💗 mobileband
-┃ 💗 pagalpancert
-┃ 💗 wallpaper
-┃ 💗 donobaat
-┃ 💗 kaanpakadna
-┃ 💗 taqdir
-┃ 💗 kapkapi
-┃ º┃ 💗 taarifcommit
-┃ 💗 captioncontest
-┃ º┃ 💗 zyadasocha
-┃ 💗 ghazab
-┃ º┃ 💗 onlinedekhna
-┃ 💗 dushmankadushman
-┃ 💗 buraanamano
-┃ 💗 mirrormirror
-┃ 💗 merahero
-┃ 💗 natkhat
-┃ 💗 pareshan
-┃ º┃ 💗 interview
-┃ 💗 kheltamam
-┃ 💗 rishtapakka
-┃ 💗 pyaardukaan
-┃ 💗 zabaansambhlo
-┃ 💗 jhootawada
-┃ 💗 sonawala
-┃ 💗 gossip
-┃ 💗 funnyrishtedar
-┃ º┃ 💗 aankheband
-┃ 💗 alvidanahi
-┃ 💗 runmureed
-┃ 💗 joke
-┃ 💗 bacha
-┃ 💗 bachi
-┃ 💗 pickup
-┃ 💗 ship
-┃ 💗 dad
-┃ 💗 mom
-┃ 💗 son
-┃ 💗 daughter
-┃ 💗 boyfriend
-┃ 💗 girlfriend
-┃ 💗 twin
-┃ 💗 partner
-┃ 💗 bodyguard
-┃ 💗 boss
-┃ 💗 employee
-┃ 💗 pet
-┃ 💗 servant
-┃ 💗 idol
-┃ 💗 fan
-┃ 💗 ghost
-┃ 💗 angel
-┃ 💗 devil
-┃ º┃ 💗 king
-┃ 💗 queen
-┃ 💗 slave
-┃ 💗 master
-┃ 💗 genius
-┃ 💗 fool
-┃ 💗 rich
-┃ 💗 poor
-┃ 💗 bhai
-┃ 💗 bahan
-┃ 💗 wife
-┃ º┃ 💗 husband
-┃ 💗 chacha
-┃ 💗 chachi
-┃ 💗 nana
-┃ 💗 nani
-┃ 💗 mama
-┃ º┃ 💗 mami
-┃ 💗 bestfriend
-┃ 💗 enemy
-┃ º┃ 💗 crush
-┃ 💗 teacher
-┃ 💗 student
-┃ 💗 rival
-┃ 💗 ishqmeter
-┃ 💗 andhaishq
-┃ 💗 lafzmohabbat
-┃ 💗 pehlinazar
-┃ 💗 dillagi
-┃ 💗 khoobsurat
-┃ 💗 dhadkan
-┃ 💗 pehlaakhat
-┃ 💗 ziddidil
-┃ º┃ 💗 yaadaata
-┃ 💗 taubatauba
-┃ 💗 pehlamuhabbat
-┃ º┃ 💗 wafaimtihaan
-┃ 💗 donokikahani
-┃ 💗 gulabbhejo
-┃ 💗 aankhein
-┃ 💗 shayarban
-┃ 💗 dushmandost
-┃ 💗 tangkarna
-┃ 💗 smilechurao
-┃ 💗 jaan
-┃ 💗 qismatwala
-┃ 💗 jhoothpyaar
-┃ º┃ º┃ 💗 siyaanibaat
-┃ 💗 mohabbatqarz
-┃ 💗 nazarutarao
-┃ 💗 romanticbakwaas
-┃ 💗 aashiqanaward
-┃ 💗 mohabbatteri
-┃ 💗 dilkhol
-┃ º┃ 💗 gussapyaar
-┃ 💗 jasoos
-┃ 💗 tangaphanda
-┃ 💗 muftadvice
-┃ 💗 nakhrebaaz
-┃ 💗 anokhapyaar
-┃ 💗 bhaaggaya
-┃ 💗 khushnaseebi
-┃ 💗 ronewala
-┃ 💗 waqtguzarna
-┃ 💗 chandsa
-┃ 💗 dostyadildar
-┃ º┃ 💗 galatfehmi
-┃ 💗 perfectmatch
-┃ 💗 raazkhola
-┃ 💗 mohabbatdarjaa
-┃ 💗 dua
-┃ 💗 khwaabon
-┃ 💗 dare
-┃ 💗 truth
-┃ 💗 shayari
-┃ 💗 technologia
-┃ 💗 motivate
-┃ 💗 repeat
-┃ 💗 lurk
-┃ 💗 shoot
-┃ 💗 sleep
-┃ 💗 clap
-┃ 💗 shrug
-┃ º┃ 💗 stare
-┃ 💗 wave
-┃ 💗 poke
-┃ 💗 confused
-┃ 💗 smile
-┃ 💗 peck
-┃ º┃ 💗 wink
-┃ 💗 sip
-┃ 💗 blush
-┃ 💗 smug
-┃ 💗 tickle
-┃ 💗 yeet
-┃ 💗 think
-┃ 💗 highfive
-┃ 💗 feed
-┃ 💗 wag
-┃ º┃ 💗 bite
-┃ 💗 teehee
-┃ 💗 shocked
-┃ 💗 bleh
-┃ 💗 bored
-┃ 💗 nom
-┃ º┃ 💗 nya
-┃ 💗 yawn
-┃ 💗 facepalm
-┃ 💗 cuddle
-┃ 💗 kick
-┃ 💗 happy
-┃ 💗 carry
-┃ 💗 hug
-┃ 💗 kabedon
-┃ º┃ 💗 baka
-┃ 💗 bonk
-┃ 💗 pat
-┃ 💗 angry
-┃ 💗 spin
-┃ 💗 shake
-┃ 💗 run
-┃ 💗 nod
-┃ º┃ 💗 nope
-┃ 💗 kiss
-┃ 💗 dance
-┃ 💗 punch
-┃ º┃ 💗 handshake
-┃ 💗 slap
-┃ 💗 cry
-┃ 💗 lappillow
-┃ º┃ 💗 pout
-┃ 💗 blowkiss
-┃ 💗 handhold
-┃ º┃ 💗 salute
-┃ 💗 thumbsup
-┃ º┃ 💗 laugh
-┃ 💗 tableflip
-┃ º┃ 💗 kids
-┃ 💗 cgrt
-┃ 💗 roll
-┃ 💗 coinflip
-┃ º┃ 💗 flip
-┃ 💗 pick
-┃ º┃ 💗 shapar
-┃ 💗 rate
-┃ 💗 matrix
-┃ º┃ 💗 fortune
-┃ 💗 gravity
-┃ º┃ 💗 echo
-┃ 💗 galaxy
-┃ º┃ 💗 ninja
-┃ 💗 sparkle
-┃ º┃ 💗 riddle
-┃ º┃ 💗 mood
-┃ 💗 countdown
-┃ º┃ 💗 uniquemenu
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴀᴜᴅɪ* 🌸 〕━━━━⬣
-┃ 💗 tomp3
-┃ º┃ 💗 toptt
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴄᴏᴜᴘʟᴇᴅᴘ* 🌸 〕━━━━⬣
-┃ 💗 coupledp1 to coupledp22
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴏْتʜᴇʀ* 🌸 〕━━━━⬣
-┃ 💗 img
-┃ º┃ 💗 img2
-┃ º┃ 💗 gpass
-┃ º┃ 💗 getpp
-┃ º┃ 💗 mee
-┃ º┃ 💗 srepo
-┃ º┃ 💗 iqc
-┃ º┃ 💗 trt
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴛᴏᴏʟs* 🌸 〕━━━━⬣
-┃ 💗 chumi
-┃ º┃ 💗 loading
-┃ º┃ 💗 cd
-┃ º┃ 💗 wthr
-┃ º┃ 💗 type
-┃ º┃ 💗 spinner
-┃ º┃ 💗 rocket
-┃ º┃ 💗 clock
-┃ º┃ 💗 fing
-┃ º┃ 💗 happy
-┃ º┃ 💗 heart
-┃ º┃ 💗 angry
-┃ º┃ 💗 sad
-┃ º┃ 💗 shy
-┃ º┃ 💗 moon
-┃ º┃ 💗 confused
-┃ º┃ 💗 nikal
-┃ º┃ 💗 saveweb
-┃ º┃ 💗 npm
-┃ º┃ 💗 sticker
-┃ º┃ 💗 attp
-┃ º┃ 💗 tiny
-┃ º┃ 💗 chai
-┃ º┃ 💗 upscale1 to upscale16
-┃ º┃ 💗 unblur
-┃ º┃ 💗 blurface
-┃ º┃ 💗 removebg
-┃ º┃ 💗 removebg2
-┃ º┃ 💗 remini
-┃ º┃ 💗 enhance1 to enhance16
-┃ º┃ 💗 colorize
-┃ º┃ 💗 savecontact
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴍᴀɪɴ* 🌸 〕━━━━⬣
-┃ º┃ 💗 owner
-┃ º┃ 💗 githubstalk
-┃ º┃ 💗 alive
-┃ º┃ 💗 menu
-┃ º┃ 💗 ping
-┃ º┃ 💗 repo
-┃ º┃ 💗 bomber
-┃ º┃ 💗 fetch
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *sᴏᴜɴᴅ* 🌸 〕━━━━⬣
-┃ º┃ 💗 sound1 to sound16
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ɢɪʀʟᴅᴘ* 🌸 〕━━━━⬣
-┃ º┃ 💗 girldp1 to girldp22
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ʜᴀᴄᴋ* 🌸 〕━━━━⬣
-┃ º┃ 💗 hack
-┃ º┃ 💗 mobilehack
-┃ º┃ 💗 ighack
-┃ º┃ 💗 fbhack
-┃ º┃ 💗 fbihack
-┃ º┃ 💗 snaphack
-┃ º┃ 💗 happybirthday
-┃ º┃ 💗 rain
-┃ º┃ 💗 virus
-┃ º┃ 💗 hackmenu
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ʜᴀʏᴀ sᴏɴɢ* 🌸 〕━━━━⬣
-┃ º┃ 💗 hayasong1 to hayasong10
-┃ º┃ 💗 haya1 to haya10
-┃ º┃ 💗 hsong1 to hsong10
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *sᴇᴛᴛɪɴɢs* 🌸 〕━━━━⬣
-┃ º┃ 💗 welcome
-┃ º┃ 💗 goodbye
-┃ º┃ 💗 setwelcome
-┃ º┃ 💗 setgoodbye
-┃ º┃ 💗 antiedit
-┃ º┃ 💗 editpath
-┃ º┃ 💗 autoread
-┃ º┃ 💗 antilink
-┃ º┃ 💗 antidelete
-┃ º┃ 💗 recording
-┃ º┃ 💗 statusview
-┃ º┃ 💗 autoreact
-┃ º┃ 💗 anticall
-┃ º┃ 💗 anticallmsg
-┃ º┃ 💗 adminaction
-┃ º┃ 💗 autotyping
-┃ º┃ 💗 online
-┃ º┃ 💗 mode
-┃ º┃ 💗 prefix
-┃ º┃ 💗 botname
-┃ º┃ 💗 ownername
-┃ º┃ 💗 ownernumber
-┃ º┃ 💗 description
-┃ º┃ 💗 botdp
-┃ º┃ 💗 stickername
-┃ º┃ 💗 delpath
-┃ º┃ 💗 reactemojis
-┃ º┃ 💗 owneremojis
-┃ º┃ 💗 settings
-┃ º┃ 💗 statusemoji
-┃ º┃ 💗 statuslike
-┃ º┃ 💗 banlist
-┃ º┃ 💗 ban
-┃ º┃ 💗 unban
-┃ º┃ 💗 sudo
-┃ º┃ 💗 delsudo
-┃ º┃ 💗 listsudo
-┃ º┃ 💗 antistatus
-┃ º┃ 💗 setstatusreact
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴍᴏᴅᴇʀᴀᴛɪᴏɴ* 🌸 〕━━━━⬣
-┃ º┃ 💗 ban
-┃ º┃ 💗 unban
-┃ º┃ 💗 banlist
-┃ º┃ 💗 sudo
-┃ º┃ 💗 delsudo
-┃ º┃ 💗 listsudo
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ʀᴇᴀْدɪْنɢ* 🌸 〕━━━━⬣
-┃ º┃ 💗 novel
-┃ º┃ 💗 next
-┃ º┃ 💗 back
-┃ º┃ 💗 page
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *سᴇᴀʀᴄʜ* 🌸 〕━━━━⬣
-┃ º┃ 💗 tiktokstalk
-┃ º┃ 💗 xstalk
-┃ º┃ 💗 yts
-┃ º┃ 💗 ytstalk
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴜɴʙᴀɴ* 🌸 〕━━━━⬣
-┃ º┃ 💗 unban1 to unban48
-┃ º┃ 💗 unbanlist
-┃ º┃ 💗 unbanguide
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴠɪᴅᴇْᴏ* 🌸 〕━━━━⬣
-┃ º┃ 💗 video1 to video25
-╰━━━━━━━━━━━━━━━━━━━━⬣
+━━━〔 ✦ فن اور شاعری ✦ 〕━━━
+│ • character
+│ • ringtone
+│ • quote
+│ • flirt
+│ • joke
+│ • shayari
+│ • truth
+│ • dare
+│ • 8ball
+─────────────
 
 > *✨ ᴘᴏᴡᴇʀᴇᴅ ʙʏ شہزاد زخمی 007 ✨*
             `;
             
             await sock.sendMessage(from, { 
-                image: { url: "https://raw.githubusercontent.com/ms7762980-commits/Irfan-Zakhmi/refs/heads/main/IMG_20261117_205928.jpg" }, 
-                caption: menuText,
-                contextInfo: {
-                    forwardingScore: 999,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363431725172035@newsletter',
-                        newsletterName: 'شہزاد زخمی Official Channel',
-                        serverMessageId: 100
-                    }
-                }
-            }, { quoted: m });
-        } 
-        else if (command === 'ping') {
-            await sock.sendMessage(from, { text: '⚡ Pong! Bot is active and running smoothly.' }, { quoted: m });
-        }
-        else if (command === 'owner') {
-            await sock.sendMessage(from, { text: 'Bot Owner: شہزاد زخمی\nContact: 923256326517' }, { quoted: m });
-        }
-        else if (command === 'sticker' || command === 's' || command === 'testicker') {
-            await sock.sendMessage(from, { text: '📸 براہ کرم تصویر کے ساتھ .sticker لکھ کر بھیجیں!' }, { quoted: m });
-        }
-        else if (command === 'vv' || command === 'vv2' || command === 'vv3') {
-            await sock.sendMessage(from, { text: '👁️ ویو ونس (View Once) کمانڈ فعال ہے۔' }, { quoted: m });
-        }
-        else {
-            await sock.sendMessage(from, { text: `⚡ کمانڈ [.${command}] فعال ہے۔` }, { quoted: m });
-        }
-    });
-}
-
-server.listen(PORT, () => {
-    console.log(`🚀 Server & Website running on port ${PORT}`);
-    startBot();
-});
+                image: { url: "
