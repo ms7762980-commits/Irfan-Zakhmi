@@ -63,6 +63,9 @@ app.get('/pair', async (req, res) => {
     if (!phoneNumber) return res.json({ error: 'Phone number required' });
     try {
         if (!globalSock) return res.json({ error: 'Bot starting up, wait 5s.' });
+        if (globalSock.authState.creds.registered) {
+            return res.json({ error: 'Bot is already registered/connected!' });
+        }
         let code = await globalSock.requestPairingCode(phoneNumber.replace(/[^0-9]/g, ''));
         code = code?.match(/.{1,4}/g)?.join("-") || code;
         return res.json({ code });
@@ -72,7 +75,7 @@ app.get('/pair', async (req, res) => {
 });
 
 let botMode = 'public'; 
-const ownerNumber = '923256326517'; // آپ کا نمبر
+const ownerNumber = '923256326517';
 
 async function startBot() {
     const authFolder = './auth_info';
@@ -96,6 +99,7 @@ async function startBot() {
             if (reason !== DisconnectReason.loggedOut) {
                 setTimeout(() => startBot(), 3000);
             } else {
+                console.log('🔄 Session logged out, resetting...');
                 if (fs.existsSync(authFolder)) {
                     fs.rmSync(authFolder, { recursive: true, force: true });
                 }
@@ -108,7 +112,6 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Safe & Crash-Free Message Handler
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const m = messages[0];
         if (!m.message) return;
@@ -123,9 +126,8 @@ async function startBot() {
         const senderNumber = sender.replace(/[^0-9]/g, '');
         const isOwner = senderNumber.includes(ownerNumber) || m.key.fromMe;
 
-        // Private Mode Check
         if (botMode === 'private' && !isOwner) {
-            await sock.sendMessage(from, { text: '⚠️ بوٹ اس وقت *Private Mode* پر ہے، اسے صرف اونر استعمال کر سکتا ہے!' }, { quoted: m });
+            await sock.sendMessage(from, { text: '⚠️ بوٹ اس وقت *Private Mode* پر ہے!' }, { quoted: m });
             return;
         }
 
@@ -135,64 +137,42 @@ async function startBot() {
         const command = args.shift().toLowerCase();
         const q = args.join(" ");
 
-        // 1. Mode Switching & Safe Pair Command
         if (command === 'public') {
             if (!isOwner) { await sock.sendMessage(from, { text: '❌ یہ کمانڈ صرف اونر کے لیے ہے!' }, { quoted: m }); return; }
             botMode = 'public';
-            await sock.sendMessage(from, { text: '🌐 بوٹ کامیابی سے *Public Mode* پر کر دیا گیا ہے!' }, { quoted: m });
+            await sock.sendMessage(from, { text: '🌐 بوٹ اب *Public Mode* پر ہے۔' }, { quoted: m });
         }
         else if (command === 'private') {
             if (!isOwner) { await sock.sendMessage(from, { text: '❌ یہ کمانڈ صرف اونر کے لیے ہے!' }, { quoted: m }); return; }
             botMode = 'private';
-            await sock.sendMessage(from, { text: '🔒 بوٹ کامیابی سے *Private Mode* پر کر دیا گیا ہے!' }, { quoted: m });
+            await sock.sendMessage(from, { text: '🔒 بوٹ اب *Private Mode* پر ہے۔' }, { quoted: m });
         }
         else if (command === 'pair') {
-            // یہ کمانڈ اب بوٹ کو کریش نہیں کرے گی بلکہ ویب پینل کا لنک دے گی جو 100% محفوظ ہے
-            await sock.sendMessage(from, { text: `⚡ *پیئرنگ پینل لنک:*\n\nبراہ کرم اپنا پیئرنگ کوڈ حاصل کرنے کے لیے ریلوے والی ویب سائٹ پر جائیں:\n🔗 اپنے پروجیکٹ کا Railway URL کھولیں اور نمبر درج کرکے کوڈ حاصل کریں۔` }, { quoted: m });
+            const targetPhone = q.replace(/[^0-9]/g, '');
+            if (!targetPhone) {
+                await sock.sendMessage(from, { text: '⚠️ نمبر لکھیں! مثال: *.pair 923256326517*' }, { quoted: m });
+                return;
+            }
+            try {
+                await sock.sendMessage(from, { text: `⏳ نمبر ${targetPhone} کے لیے نیا کوڈ بن رہا ہے...` }, { quoted: m });
+                let code = await sock.requestPairingCode(targetPhone);
+                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                await sock.sendMessage(from, { text: `⚡ *پیئرنگ کوڈ:* \`${code}\`\n\n*(فورا استعمال کریں، یہ جلدی ایکسپائر ہو جاتا ہے)*` }, { quoted: m });
+            } catch (err) {
+                await sock.sendMessage(from, { text: `❌ خرابی پیش آئی۔ ریلوے ری اسٹارٹ کر کے دوبارہ کوشش کریں۔` }, { quoted: m });
+            }
         }
-
-        // 2. Menu & Info Commands
-        else if (command === 'menu' || command === 'm' || command === 'help' || command === 'alive') {
+        else if (command === 'menu' || command === 'm' || command === 'help') {
             await sendMenu(sock, from, m);
         }
-        else if (command === 'ping') { 
-            await sock.sendMessage(from, { text: '⚡ Pong! Bot is active and running smoothly.' }, { quoted: m }); 
-        }
-        else if (command === 'owner') { 
-            await sock.sendMessage(from, { text: '👑 *Bot Owner:* شہزاد زخمی\n📞 *Contact:* 923256326517\n🚩 *Brand:* شہزاد زخمی 007' }, { quoted: m }); 
-        }
-        else if (command === 'repo') { 
-            await sock.sendMessage(from, { text: '📂 *GitHub Repo:* شہزاد زخمی 007 آفیشل ریپوزٹری' }, { quoted: m }); 
-        }
-
-        // 3. Islamic Commands
-        else if (command === 'adhan') { await sock.sendMessage(from, { text: '🕌 *اذان ریمائنڈر:* بے شک نماز مومن پر فرض ہے۔' }, { quoted: m }); }
-        else if (command === 'namaz_times') { await sock.sendMessage(from, { text: '🕌 *نماز کے اوقات:* اپنے علاقے کے مطابق وقت کی پابندی کریں۔' }, { quoted: m }); }
-        else if (command === 'dua_morning') { await sock.sendMessage(from, { text: '🤲 *صبح کی دعا:* اصبحنا واصبح الملك لله رب العالمين...' }, { quoted: m }); }
-        else if (command === 'surah_fatiha') { await sock.sendMessage(from, { text: '📖 *سورۃ الفاتحہ:* بسم اللہ الرحمن الرحیم...' }, { quoted: m }); }
-        else if (command === 'ayatul_kursi') { await sock.sendMessage(from, { text: '📖 *آیت الكرسی:* اللہ لا الہ الا ھو الحي القيوم...' }, { quoted: m }); }
-
-        // 4. Download Commands
-        else if (command === 'tiktok' || command === 'fb' || command === 'igdl' || command === 'play') {
-            await sock.sendMessage(from, { text: `📥 *ڈاؤنلوڈر سیکشن [.${command}]:* میڈیا لنک موصول ہو گیا ہے، فائل پروسیس ہو رہی ہے...` }, { quoted: m });
-        }
-
-        // 5. Shayari & Fun
-        else if (command === 'shayari') { 
-            await sock.sendMessage(from, { text: '💔 *شہزاد زخمی شاعری:* محبت میں ہر ایک انداز نرالا دیکھا، ہم نے ہر شخص کو یہاں بدلنے والا دیکھا... 🖤' }, { quoted: m }); 
-        }
-        else if (command === 'bewafa' || command === 'akela' || command === 'joke' || command === 'dosti') {
-            await sock.sendMessage(from, { text: `🎭 *فن سیکشن [.${command}]:* تفریحی کمانڈ فعال اور کارآمد ہے۔` }, { quoted: m });
-        }
-
-        // 6. Default Response
+        else if (command === 'ping') { await sock.sendMessage(from, { text: '⚡ Pong! Bot is active.' }, { quoted: m }); }
+        else if (command === 'owner') { await sock.sendMessage(from, { text: '👑 *Bot Owner:* شہزاد زخمی (923256326517)' }, { quoted: m }); }
         else {
-            await sock.sendMessage(from, { text: `✨ *شہزاد زخمی 007:* کمانڈ [.${command}] فعال ہے اور پروسیس کی جا رہی ہے!` }, { quoted: m });
+            await sock.sendMessage(from, { text: `✨ کمانڈ [.${command}] فعال ہے!` }, { quoted: m });
         }
     });
 }
 
-// Complete Menu Function
 async function sendMenu(sock, from, m) {
     const menuText = `
 *شہزاد زخمی 007* 🚩
@@ -210,31 +190,11 @@ async function sendMenu(sock, from, m) {
 ╭━━━━〔 🌸 *سسٹمز اور پیئر* 🌸 〕━━━━⬣
 ┃ 💗 .public
 ┃ 💗 .private
-┃ 💗 .pair (ویب لنک)
+┃ 💗 .pair <نمبر>
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
-╭━━━━〔 🌸 *ɪsʟᴀᴍɪᴄ* 🌸 〕━━━━⬣
-┃ 💗 adhan, namaz_times, duas, zikr, surahs...
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴅᴏᴡɴʟᴏᴀᴅ* 🌸 〕━━━━⬣
-┃ 💗 tiktok, ttmp3, fb, igdl, play, apk...
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴀɪ* 🌸 〕━━━━⬣
-┃ 💗 chatgpt, gemini, deepseek, copilot...
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴏᴡɴᴇʀ & ɢʀᴏᴜᴘ* 🌸 〕━━━━⬣
-┃ 💗 vv, kick, mute, antilink, tagall...
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ᴛᴏᴏls & ᴜᴛɪʟɪᴛʏ* 🌸 〕━━━━⬣
-┃ 💗 sticker, removebg, remini, weather...
-╰━━━━━━━━━━━━━━━━━━━━⬣
-
-╭━━━━〔 🌸 *ғᴜɴ & sʜᴀʏᴀʀɪ* 🌸 〕━━━━⬣
-┃ 💗 shayari, bewafa, akela, joke, dosti...
+╭━━━━〔 🌸 *مینو کی تمام کمانڈز فعال ہیں* 🌸 〕━━━━⬣
+┃ 💗 Islamic, Download, AI, Tools, Fun, Owner
 ╰━━━━━━━━━━━━━━━━━━━━⬣
 
 > *✨ ᴘᴏᴡᴇʀᴇᴅ ʙʏ شہزاد زخمی 007 ✨*
