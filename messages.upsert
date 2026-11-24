@@ -1,6 +1,0 @@
-if (await islamic(sock, m, command, from)) return;
-if (await download(sock, m, command, from, q)) return;
-if (await ai(sock, m, command, from, q)) return;
-if (await owner(sock, m, command, from, isOwner)) return;
-if (await tools(sock, m, command, from)) return;
-if (await fun(sock, m, command, from)) return;
