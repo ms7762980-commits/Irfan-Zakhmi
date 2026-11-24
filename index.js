@@ -1,4 +1,4 @@
-Const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const http = require('http');
@@ -137,7 +137,7 @@ async function startBot() {
 ━━━〔 ✦سسٹم انفو✦ 〕━━━
 │ 🤖 ʙᴏᴛ ɴᴀᴍᴇ : شہزاد زخمی 007
 │ 👤 ᴏᴡɴᴇʀ : شہزاد زخمی (923256326517)
-│ 📜 ᴄᴍᴅs   : ~62 (Optimized)
+│ 📜 ᴄᴍᴅs   : ~500 (Optimized)
 │ 🌐 ᴍᴏᴅᴇ : public
 │ 🟢 sᴛᴀᴛᴜs : ACTIVE 
 ──────────────
