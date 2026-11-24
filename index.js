@@ -1,9 +1,10 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers, downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const http = require('http');
 const { Boom } = require('@hapi/boom');
 const fs = require('fs');
+const path = require('path');
 const os = require('os');
 
 const app = express();
@@ -96,13 +97,7 @@ app.get('/pair', async (req, res) => {
     }
 });
 
-let botMode = 'public'; 
-let antiLink = true;
-let reactionStatus = true;
-const ownerNumber = '923256326517';
-
 async function startBot() {
-    // ریلوے کے کریش کو روکنے کے لیے ٹیمپریری فولڈر کا استعمال
     const authFolder = path.join(os.tmpdir(), 'auth_info_shahzad');
     
     try {
