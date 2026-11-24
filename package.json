@@ -1,11 +1,14 @@
 {
-  "name": "shahzad-mini-bot",
+  "name": "shahzad-zakhmi-bot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.8",
+    "express": "^4.19.2",
+    "pino": "^9.0.0"
   }
 }
