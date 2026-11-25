@@ -46,9 +46,6 @@ global.mess = {
     success: 'یہ رہا آپ کا کام!'
 }
 
-//thumbnail
-global.thumb = fs.readFileSync('./XeonMedia/theme/cheemspic.jpg')
-
 let file = require.resolve(__filename)
 fs.watchFile(file, () => {
     fs.unwatchFile(file)
