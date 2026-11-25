@@ -1,32 +1,53 @@
+//base by Shahzad Zakhmi 007
+//YouTube: Shahzad Zakhmi 007
+//GitHub: ShahzadZakhmi007
+
 const fs = require('fs')
 const chalk = require('chalk')
 
-// --- Owner & Developer Configuration ---
-global.owner = ['923256326517', '92333626862'] // آپ کے دونوں اونر نمبرز
-global.ownernomer = '923256326517' // مین اونر نمبر
-global.ownername = 'شہزاد زخمی' // اونر کا نام
-global.developer = 'شہزاد زخمی' // ڈویلپر کا نام
-global.botname = 'شہزاد زخمی بوٹ' // بوٹ کا نام
-global.packname = 'شہزاد زخمی اسٹیکر'
-global.author = 'Shahzad Zakhmi'
+//owner v card
+global.ytname = "Shahzad Zakhmi 007" // آپ کا چینل نام
+global.socialm = "GitHub: ShahzadZakhmi007" // آپ کا گٹ ہب
+global.location = "Shujabad, Pakistan" // آپ کا علاقہ
 
-// --- Bot Settings (Public / Multi-User Mode) ---
-global.mode = 'public' // 'public' کا مطلب ہے کہ ہر کوئی بوٹ استعمال کر سکتا ہے
-global.autoRead = false
-global.anticall = false // کال پروٹیکشن (اگر آپ چاہیں تو true کر سکتے ہیں)
+//new
+global.botname = 'شہزاد زخمی 007 واٹس ایپ بوٹ' // بوٹ کا نام
+global.ownernumber = 'YOUR_NUMBER_HERE' // یہاں اپنا واٹس ایپ نمبر لکھیں (بغیر پلس کے، مثلاً 923xxxxxxxxx)
+global.ownername = 'شہزاد زخمی 007' // اونر کا نام
+global.websitex = "https://github.com"
+global.wagc = "https://whatsapp.com"
+global.themeemoji = '🛡️'
+global.wm = "Shahzad Zakhmi WA Bot"
+global.botscript = 'https://github.com/ShahzadZakhmi007' // اسکرپٹ لنک
+global.packname = "Sticker By"
+global.author = "👑 شہزاد زخمی 007 👑\n\n"
+global.creator = "YOUR_JID_HERE@s.whatsapp.net" // یہاں اپنی واٹس ایپ JID درج کریں (مثلاً: 923xxxxxxxxx@s.whatsapp.net)
+global.xprefix = ''
+global.premium = ["YOUR_NUMBER_HERE"] // پریمیم یوزر نمبر
+global.hituet = 0
 
-// --- Messsages ---
+//bot sett
+global.typemenu = 'v8' // مینو ٹائپ
+global.typereply = 'v2' // ریپلائی ٹائپ
+global.autoblocknumber = '91' 
+global.antiforeignnumber = '' 
+global.welcome = true // ویلکم میसेज
+global.anticall = true // کال کرنے پر آٹو بلاک
+global.autoswview = true // آٹو اسٹیٹس ویو
+global.adminevent = true 
+global.groupevent = true 
+
+//msg
 global.mess = {
-    admin: 'یہ کمانڈ صرف گروپ ایڈمن کے لیے ہے!',
-    owner: 'یہ کمانڈ صرف میرے مالک (شہزاد زخمی) کے لیے ہے!',
-    group: 'یہ کمانڈ صرف گروپس میں کام کرے گی!',
-    private: 'یہ کمانڈ صرف ان باکس (پرائیویٹ چیٹ) میں کام کرے گی!',
-    bot: 'یہ کمانڈ صرف بوٹ استعمال کر سکتا ہے!',
-    wait: 'براہ کرم انتظار کریں، آپ کی درخواست پر کام ہو رہا ہے...',
-    done: 'کام مکمل ہو گیا!',
+	limit: 'آپ کی لمیٹ ختم ہو گئی ہے!',
+	nsfw: 'اس گروپ میں NSFW بند ہے، براہ کرم ایڈمن سے کہیں کہ اسے آن کرے',
+    done: 'ہو گیا ✓',
+    error: 'خرابی پیش آگئی!',
+    success: 'یہ رہا آپ کا کام!'
 }
 
-global.thumb = fs.readFileSync('./XeonMedia/theme/cheems.jpg')
+//thumbnail
+global.thumb = fs.readFileSync('./XeonMedia/theme/cheemspic.jpg')
 
 let file = require.resolve(__filename)
 fs.watchFile(file, () => {
